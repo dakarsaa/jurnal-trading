@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dasbor Jurnal Trading Forex - Stabil</title>
+    <title>Dasbor Jurnal Trading Forex - Final</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
@@ -81,12 +81,12 @@
     </div>
 
     <script>
-    document.addEventListener('DOMContentLoaded', async function() {
+    document.addEventListener('DOMContentLoaded', function() {
         // ==================================================================
         // === KONFIGURASI WAJIB: GANTI DENGAN KUNCI RAHASIA ANDA ===
         // ==================================================================
-        const AIRTABLE_API_KEY = "patgVfG7UrVD0cru3.f8411907bca108083167b58676e91078452dd530958923555bb0895e15d38457";
-        const AIRTABLE_BASE_ID = "app0SlHtg1Nnb0H9B";
+        const AIRTABLE_API_KEY = "GANTI_DENGAN_API_KEY_ANDA";
+        const AIRTABLE_BASE_ID = "GANTI_DENGAN_BASE_ID_ANDA";
         const AIRTABLE_TABLE_NAME = "Trades";
         // ==================================================================
 
@@ -111,11 +111,15 @@
                 const options = { method, headers: apiHeaders };
                 if (body) options.body = JSON.stringify(body);
                 const response = await fetch(url, options);
-                if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
+                if (!response.ok) {
+                    const errData = await response.json();
+                    console.error('API Error:', errData);
+                    throw new Error(`API Error: ${response.statusText}`);
+                }
                 return method === 'DELETE' ? response.ok : response.json();
             } catch (error) {
                 console.error(`Error with ${method} request to ${url}:`, error);
-                alert(`Terjadi kesalahan jaringan. Gagal ${method === 'GET' ? 'memuat' : 'menyimpan'} data.`);
+                alert(`Terjadi kesalahan jaringan. Gagal ${method === 'GET' ? 'memuat' : 'menyimpan'} data. Periksa console untuk detail.`);
                 return null;
             }
         }
@@ -124,12 +128,20 @@
             ui.loadingIndicator.style.display = 'block';
             ui.dashboardContent.style.display = 'none';
             const data = await apiCall(airtableUrl);
+            
             if (data && data.records) {
                 tradingData = data.records.map(record => ({ id: record.id, ...record.fields }));
+                // PERBAIKAN UTAMA ADA DI SINI:
+                // Tampilkan konten DULU, baru panggil fullUpdate()
+                ui.loadingIndicator.style.display = 'none';
+                ui.dashboardContent.style.display = 'block';
+                fullUpdate(); 
+            } else {
+                 // Jika gagal fetch, tetap tampilkan dashboard kosong
+                ui.loadingIndicator.style.display = 'none';
+                ui.dashboardContent.style.display = 'block';
                 fullUpdate();
             }
-            ui.loadingIndicator.style.display = 'none';
-            ui.dashboardContent.style.display = 'block';
         }
 
         function getInitialBalance() { return parseFloat(ui.initialBalanceInput.value) || 0; }
@@ -237,14 +249,12 @@
         function drawEquityChart() {
             const svg = d3.select("#equityChartUsd");
             svg.selectAll("*").remove();
-            const margin = { top: 20, right: 30, bottom: 40, left: 60 };
             const parentNode = svg.node().parentNode;
-            if (!parentNode) return;
-            
+            if (!parentNode || parentNode.clientWidth === 0) return; // Exit if container not visible or has no width
+
+            const margin = { top: 20, right: 30, bottom: 40, left: 60 };
             const width = parentNode.clientWidth - margin.left - margin.right;
             const height = 400 - margin.top - margin.bottom;
-
-            if (width <= 0) return;
 
             const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
             const initialBalance = getInitialBalance();
@@ -259,6 +269,7 @@
 
             const x = d3.scaleLinear().domain([0, chartData.length - 1]).range([0, width]);
             const y = d3.scaleLinear().domain(d3.extent(chartData, d => d.equityUsd)).nice().range([height, 0]);
+            
             g.append("path").datum(chartData).attr("fill", "#dcfce7").attr("d", d3.area().x(d => x(d.index)).y0(y(initialBalance)).y1(d => y(d.equityUsd)));
             g.append("path").datum(chartData).attr("fill", "none").attr("stroke", "#22c55e").attr("stroke-width", 2).attr("d", d3.line().x(d => x(d.index)).y(d => y(d.equityUsd)));
             g.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).ticks(Math.min(10, chartData.length - 1)).tickFormat(d3.format("d")));
