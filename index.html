@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dasbor Jurnal Trading Forex - Final</title>
+    <title>Dasbor Jurnal Trading Forex - Final Online</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
@@ -33,7 +33,7 @@
     <div class="container">
         <h1 class="text-3xl font-bold mb-6 text-gray-800 text-center">Dasbor Jurnal Trading Online</h1>
         
-        <div id="loadingIndicator" class="text-center py-4"><div class="loader"></div><p>Memuat data...</p></div>
+        <div id="loadingIndicator" class="text-center py-4"><div class="loader"></div><p>Menghubungi database...</p></div>
 
         <div id="dashboardContent" style="display: none;">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 text-center">
@@ -44,7 +44,7 @@
             <div style="display: flex; justify-content: center; margin-bottom: 1.5rem;"><label for="initialBalance" class="font-bold mr-2 self-center">Saldo Awal (USD):</label><input type="number" id="initialBalance" value="1000" min="0" step="100" class="p-2 border rounded"></div>
             <h2 class="text-2xl font-bold mb-4 text-gray-800 text-center">Manajemen Trading</h2>
             <form id="tradeForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-lg shadow-sm mb-6">
-                <div><label for="date">Tanggal & Waktu:</label><input type="datetime-local" id="date" class="w-full p-2 border rounded"></div>
+                 <div><label for="date">Tanggal & Waktu:</label><input type="datetime-local" id="date" class="w-full p-2 border rounded"></div>
                 <div><label for="pair">Pair:</label><input type="text" id="pair" placeholder="EUR/USD" class="w-full p-2 border rounded"></div>
                 <div><label for="lotSize">Lot:</label><input type="number" id="lotSize" step="0.01" min="0.01" class="w-full p-2 border rounded"></div>
                 <div><label for="position">Posisi:</label><select id="position" class="w-full p-2 border rounded"><option value="Buy">Buy</option><option value="Sell">Sell</option></select></div>
@@ -106,51 +106,64 @@
 
         const apiHeaders = { 'Authorization': `Bearer ${AIRTABLE_API_KEY}`, 'Content-Type': 'application/json' };
 
-        async function apiCall(url, method = 'GET', body = null) {
-            try {
-                const options = { method, headers: apiHeaders };
-                if (body) options.body = JSON.stringify(body);
-                const response = await fetch(url, options);
-                if (!response.ok) {
-                    const errData = await response.json();
-                    console.error('API Error:', errData);
-                    throw new Error(`API Error: ${response.statusText}`);
-                }
-                return method === 'DELETE' ? response.ok : response.json();
-            } catch (error) {
-                console.error(`Error with ${method} request to ${url}:`, error);
-                alert(`Terjadi kesalahan jaringan. Gagal ${method === 'GET' ? 'memuat' : 'menyimpan'} data. Periksa console untuk detail.`);
-                return null;
-            }
-        }
-
+        // --- FUNGSI API UNTUK BERBICARA DENGAN AIRTABLE ---
         async function fetchTrades() {
             ui.loadingIndicator.style.display = 'block';
             ui.dashboardContent.style.display = 'none';
-            const data = await apiCall(airtableUrl);
-            
-            if (data && data.records) {
-                tradingData = data.records.map(record => ({ id: record.id, ...record.fields }));
-                // PERBAIKAN UTAMA ADA DI SINI:
-                // Tampilkan konten DULU, baru panggil fullUpdate()
-                ui.loadingIndicator.style.display = 'none';
-                ui.dashboardContent.style.display = 'block';
-                fullUpdate(); 
-            } else {
-                 // Jika gagal fetch, tetap tampilkan dashboard kosong
+            try {
+                const response = await fetch(airtableUrl, { headers: apiHeaders });
+                if (!response.ok) throw new Error(`Error: ${response.statusText}`);
+                const data = await response.json();
+                tradingData = data.records.map(record => ({ airtableId: record.id, ...record.fields }));
+            } catch (error) {
+                console.error("Gagal mengambil data dari Airtable:", error);
+                alert("Gagal memuat data. Periksa API Key & Base ID Anda.");
+                tradingData = []; // Tampilkan data kosong jika gagal
+            } finally {
                 ui.loadingIndicator.style.display = 'none';
                 ui.dashboardContent.style.display = 'block';
                 fullUpdate();
             }
         }
 
+        async function saveData(fields, recordId = null) {
+            const url = recordId ? `${airtableUrl}/${recordId}` : airtableUrl;
+            const method = recordId ? 'PATCH' : 'POST';
+            const body = { fields };
+
+            try {
+                const response = await fetch(url, { method, headers: apiHeaders, body: JSON.stringify(body) });
+                if (!response.ok) {
+                    const err = await response.json();
+                    console.error("Airtable Error:", err);
+                    throw new Error("Gagal menyimpan data ke Airtable.");
+                }
+                await fetchTrades(); // Muat ulang semua data setelah berhasil
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+        
+        async function deleteTrade(recordId) {
+             try {
+                const response = await fetch(`${airtableUrl}/${recordId}`, { method: 'DELETE', headers: apiHeaders });
+                if (!response.ok) throw new Error("Gagal menghapus data.");
+                await fetchTrades();
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        // --- FUNGSI KALKULASI (TIDAK BERUBAH) ---
         function getInitialBalance() { return parseFloat(ui.initialBalanceInput.value) || 0; }
         function calculatePips(pair, position, entry, exit) {
-            const multiplier = pair && pair.toUpperCase().includes('JPY') ? 100 : 10000;
+            if (!pair || !position || !entry || !exit) return 0;
+            const multiplier = pair.toUpperCase().includes('JPY') ? 100 : 10000;
             return parseFloat(((position === 'Buy' ? exit - entry : entry - exit) * multiplier).toFixed(1));
         }
         function calculateProfitInUsd(pair, pips, lotSize) {
-            const pipValue = pair && pair.toUpperCase().includes('JPY') ? 7 : 10;
+            if (!pair) return 0;
+            const pipValue = pair.toUpperCase().includes('JPY') ? 7 : 10;
             return pips * (lotSize || 0) * pipValue;
         }
         function calculateRiskReward(position, entry, sl, tp) {
@@ -160,6 +173,7 @@
             return loss > 0 ? `1:${(profit / loss).toFixed(2)}` : 'Inf';
         }
 
+        // --- FUNGSI UNTUK MERENDER UI (SEBAGIAN BESAR TIDAK BERUBAH) ---
         function renderTable() {
             ui.tableBody.innerHTML = '';
             const sortedData = [...tradingData].sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -169,9 +183,9 @@
                 const rr = calculateRiskReward(trade.position, trade.entryPrice, trade.stopLoss, trade.takeProfit);
                 const profitClass = profitUsd >= 0 ? 'profit' : 'loss';
                 const row = document.createElement('tr');
-                row.dataset.id = trade.id;
+                row.dataset.id = trade.airtableId;
                 row.innerHTML = `
-                    <td class="flex gap-2"><button class="btn-edit" data-id="${trade.id}">E</button><button class="btn-delete" data-id="${trade.id}">H</button></td>
+                    <td class="flex gap-2"><button class="btn-edit" data-id="${trade.airtableId}">E</button><button class="btn-delete" data-id="${trade.airtableId}">H</button></td>
                     <td>${new Date(trade.date).toLocaleDateString('id-ID')}</td>
                     <td>${trade.pair || ''}</td>
                     <td>${trade.position || ''}</td>
@@ -186,12 +200,12 @@
         }
         
         function updateAllStats() {
+            // ... (Fungsi ini tidak berubah, hanya namanya saja)
             const initialBalance = getInitialBalance();
             const totalPl = tradingData.reduce((acc, trade) => acc + calculateProfitInUsd(trade.pair, calculatePips(trade.pair, trade.position, trade.entryPrice, trade.exitPrice), trade.lotSize), 0);
             document.getElementById('currentBalanceValue').textContent = `$${(initialBalance + totalPl).toFixed(2)}`;
             document.getElementById('totalPlValue').textContent = `$${totalPl.toFixed(2)}`;
             document.getElementById('plPercentageValue').textContent = `${initialBalance > 0 ? (totalPl / initialBalance * 100).toFixed(2) : 0}%`;
-
             const stats = tradingData.reduce((acc, trade) => {
                 const profit = calculateProfitInUsd(trade.pair, calculatePips(trade.pair, trade.position, trade.entryPrice, trade.exitPrice), trade.lotSize);
                 acc.total++;
@@ -202,15 +216,7 @@
             const avgWin = stats.wins > 0 ? stats.grossProfit / stats.wins : 0;
             const avgLoss = stats.losses > 0 ? stats.grossLoss / stats.losses : 0;
             const profitFactor = stats.grossLoss !== 0 ? Math.abs(stats.grossProfit / stats.grossLoss) : Infinity;
-            document.getElementById('statisticsBody').innerHTML = `
-                <tr><td class="py-2">Total Trades</td><td class="text-right">${stats.total}</td></tr>
-                <tr><td class="py-2">Winning Trades</td><td class="text-right">${stats.wins} (${winRate.toFixed(2)}%)</td></tr>
-                <tr><td class="py-2">Losing Trades</td><td class="text-right">${stats.losses}</td></tr>
-                <tr><td class="py-2">Profit Factor</td><td class="text-right">${profitFactor === Infinity ? 'Inf' : profitFactor.toFixed(2)}</td></tr>
-                <tr><td class="py-2">Rata-rata Keuntungan</td><td class="text-right profit">$${avgWin.toFixed(2)}</td></tr>
-                <tr><td class="py-2">Rata-rata Kerugian</td><td class="text-right loss">$${avgLoss.toFixed(2)}</td></tr>
-            `;
-
+            document.getElementById('statisticsBody').innerHTML = `<tr><td class="py-2">Total Trades</td><td class="text-right">${stats.total}</td></tr><tr><td class="py-2">Winning Trades</td><td class="text-right">${stats.wins} (${winRate.toFixed(2)}%)</td></tr><tr><td class="py-2">Losing Trades</td><td class="text-right">${stats.losses}</td></tr><tr><td class="py-2">Profit Factor</td><td class="text-right">${profitFactor === Infinity ? 'Inf' : profitFactor.toFixed(2)}</td></tr><tr><td class="py-2">Rata-rata Keuntungan</td><td class="text-right profit">$${avgWin.toFixed(2)}</td></tr><tr><td class="py-2">Rata-rata Kerugian</td><td class="text-right loss">$${avgLoss.toFixed(2)}</td></tr>`;
             const renderSummary = (containerId, key) => {
                 const summary = tradingData.reduce((acc, trade) => {
                     const k = trade[key] || 'N/A';
@@ -219,13 +225,10 @@
                     if (calculatePips(trade.pair, trade.position, trade.entryPrice, trade.exitPrice) > 0) acc[k].wins++;
                     return acc;
                 }, {});
-                document.getElementById(containerId).innerHTML = Object.entries(summary).sort().map(([k, v]) => `
-                    <div class="summary-item"><span>${k}</span><span class="percentage">${((v.wins / v.total) * 100).toFixed(1)}%</span></div>
-                `).join('');
+                document.getElementById(containerId).innerHTML = Object.entries(summary).sort().map(([k, v]) => `<div class="summary-item"><span>${k}</span><span class="percentage">${((v.wins / v.total) * 100).toFixed(1)}%</span></div>`).join('');
             };
             renderSummary('strategySummary', 'reason');
             renderSummary('timeframeSummary', 'timeframe');
-
             const getWeekKey = d => { const date = new Date(d); date.setDate(date.getDate() - date.getDay() + 1); return date.toISOString().split('T')[0]; };
             const getMonthKey = d => new Date(d).toISOString().slice(0, 7);
             const renderPeriodicPerf = (tableId, grouper) => {
@@ -238,43 +241,35 @@
                     if (profit > 0) acc[key].wins++;
                     return acc;
                 }, {});
-                document.querySelector(`#${tableId} tbody`).innerHTML = Object.entries(perf).sort().reverse().map(([period, stats]) => `
-                    <tr><td>${period}</td><td>${stats.trades}</td><td>${((stats.wins / stats.trades) * 100).toFixed(1)}%</td><td class="${stats.profit >= 0 ? 'profit' : 'loss'}">$${stats.profit.toFixed(2)}</td></tr>
-                `).join('');
+                document.querySelector(`#${tableId} tbody`).innerHTML = Object.entries(perf).sort().reverse().map(([period, stats]) => `<tr><td>${period}</td><td>${stats.trades}</td><td>${((stats.wins / stats.trades) * 100).toFixed(1)}%</td><td class="${stats.profit >= 0 ? 'profit' : 'loss'}">$${stats.profit.toFixed(2)}</td></tr>`).join('');
             };
             renderPeriodicPerf('weeklyPerformanceTable', getWeekKey);
             renderPeriodicPerf('monthlyPerformanceTable', getMonthKey);
         }
 
-function drawEquityChartUsd() {
+        function drawEquityChart() {
+            // ... (Fungsi ini tidak berubah)
             const svg = d3.select("#equityChartUsd");
             svg.selectAll("*").remove();
-
-            const margin = { top: 20, right: 30, bottom: 40, left: 50 };
-            const width = svg.node().parentNode.clientWidth - margin.left - margin.right;
+            const parentNode = svg.node().parentNode;
+            if (!parentNode || parentNode.clientWidth === 0) return;
+            const margin = { top: 20, right: 30, bottom: 40, left: 60 };
+            const width = parentNode.clientWidth - margin.left - margin.right;
             const height = 400 - margin.top - margin.bottom;
             const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
-            
             const initialBalance = getInitialBalance();
             let cumulativeEquity = initialBalance;
-            
-            const sortedData = [...tradingData].sort((a, b) => new Date(a.date) - new Date(b.date));
             const chartData = [{ index: 0, equityUsd: initialBalance }];
-
-            sortedData.forEach((trade, index) => {
-                const pips = calculatePips(trade.pair, trade.position, trade.entryPrice, trade.exitPrice);
-                cumulativeEquity += calculateProfitInUsd(trade.pair, pips, trade.lotSize);
-                chartData.push({ index: index + 1, equityUsd: cumulativeEquity });
+            [...tradingData].sort((a, b) => new Date(a.date) - new Date(b.date)).forEach((trade, i) => {
+                cumulativeEquity += calculateProfitInUsd(trade.pair, calculatePips(trade.pair, trade.position, trade.entryPrice, trade.exitPrice), trade.lotSize);
+                chartData.push({ index: i + 1, equityUsd: cumulativeEquity });
             });
-
             if (chartData.length <= 1) return;
-
             const x = d3.scaleLinear().domain([0, chartData.length - 1]).range([0, width]);
             const y = d3.scaleLinear().domain(d3.extent(chartData, d => d.equityUsd)).nice().range([height, 0]);
-            
             g.append("path").datum(chartData).attr("fill", "#dcfce7").attr("d", d3.area().x(d => x(d.index)).y0(y(initialBalance)).y1(d => y(d.equityUsd)));
             g.append("path").datum(chartData).attr("fill", "none").attr("stroke", "#22c55e").attr("stroke-width", 2).attr("d", d3.line().x(d => x(d.index)).y(d => y(d.equityUsd)));
-            g.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).ticks(Math.min(10, chartData.length-1)).tickFormat(d3.format("d")));
+            g.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).ticks(Math.min(10, chartData.length - 1)).tickFormat(d3.format("d")));
             g.append("g").call(d3.axisLeft(y).tickFormat(d3.format("$,.0f")));
         }
 
@@ -286,6 +281,7 @@ function drawEquityChartUsd() {
             document.getElementById('date').value = new Date().toISOString().slice(0, 16);
         }
 
+        // --- EVENT HANDLERS (DENGAN KONEKSI KE API) ---
         ui.tradeForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const fields = Array.from(ui.tradeForm.elements).reduce((acc, el) => {
@@ -295,13 +291,8 @@ function drawEquityChartUsd() {
             ui.addOrUpdateTradeBtn.disabled = true;
             ui.addOrUpdateTradeBtn.textContent = 'Menyimpan...';
 
-            if (recordBeingEditedId) {
-                await apiCall(`${airtableUrl}/${recordBeingEditedId}`, 'PATCH', { fields });
-            } else {
-                await apiCall(airtableUrl, 'POST', { fields });
-            }
+            await saveData(fields, recordBeingEditedId);
             
-            await fetchTrades();
             ui.addOrUpdateTradeBtn.disabled = false;
             resetForm();
         });
@@ -310,10 +301,10 @@ function drawEquityChartUsd() {
             const { id } = e.target.dataset;
             if (e.target.classList.contains('btn-delete')) {
                 if (confirm('Anda yakin ingin menghapus data ini secara permanen?')) {
-                    apiCall(`${airtableUrl}/${id}`, 'DELETE').then(fetchTrades);
+                    deleteTrade(id);
                 }
             } else if (e.target.classList.contains('btn-edit')) {
-                const trade = tradingData.find(t => t.id === id);
+                const trade = tradingData.find(t => t.airtableId === id);
                 recordBeingEditedId = id;
                 Object.keys(trade).forEach(key => {
                     const el = document.getElementById(key);
@@ -335,11 +326,10 @@ function drawEquityChartUsd() {
             drawEquityChart();
         }
 
+        // --- INITIAL LOAD ---
         resetForm();
         fetchTrades();
     });
     </script>
 </body>
 </html>
-
-
