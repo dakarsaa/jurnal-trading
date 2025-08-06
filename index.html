@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dasbor Jurnal Trading Forex - Lengkap</title>
+    <title>Dasbor Jurnal Trading Forex - Stabil</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
@@ -174,14 +174,12 @@
         }
         
         function updateAllStats() {
-            // Summary
             const initialBalance = getInitialBalance();
             const totalPl = tradingData.reduce((acc, trade) => acc + calculateProfitInUsd(trade.pair, calculatePips(trade.pair, trade.position, trade.entryPrice, trade.exitPrice), trade.lotSize), 0);
             document.getElementById('currentBalanceValue').textContent = `$${(initialBalance + totalPl).toFixed(2)}`;
             document.getElementById('totalPlValue').textContent = `$${totalPl.toFixed(2)}`;
             document.getElementById('plPercentageValue').textContent = `${initialBalance > 0 ? (totalPl / initialBalance * 100).toFixed(2) : 0}%`;
 
-            // Detailed Stats
             const stats = tradingData.reduce((acc, trade) => {
                 const profit = calculateProfitInUsd(trade.pair, calculatePips(trade.pair, trade.position, trade.entryPrice, trade.exitPrice), trade.lotSize);
                 acc.total++;
@@ -201,7 +199,6 @@
                 <tr><td class="py-2">Rata-rata Kerugian</td><td class="text-right loss">$${avgLoss.toFixed(2)}</td></tr>
             `;
 
-            // Strategy & Timeframe Summaries
             const renderSummary = (containerId, key) => {
                 const summary = tradingData.reduce((acc, trade) => {
                     const k = trade[key] || 'N/A';
@@ -217,7 +214,6 @@
             renderSummary('strategySummary', 'reason');
             renderSummary('timeframeSummary', 'timeframe');
 
-            // Periodic Performance
             const getWeekKey = d => { const date = new Date(d); date.setDate(date.getDate() - date.getDay() + 1); return date.toISOString().split('T')[0]; };
             const getMonthKey = d => new Date(d).toISOString().slice(0, 7);
             const renderPeriodicPerf = (tableId, grouper) => {
@@ -240,74 +236,33 @@
 
         function drawEquityChart() {
             const svg = d3.select("#equityChartUsd");
-            svg.selectAll("*").remove(); // Membersihkan grafik sebelumnya
-
-            const margin = { top: 20, right: 30, bottom: 40, left: 60 }; // Beri ruang lebih untuk label Y
-            // Memastikan ada lebar minimum untuk mencegah error
-            const parentWidth = svg.node().parentNode.clientWidth;
-            if (parentWidth <= margin.left + margin.right) return; // Keluar jika container terlalu kecil
+            svg.selectAll("*").remove();
+            const margin = { top: 20, right: 30, bottom: 40, left: 60 };
+            const parentNode = svg.node().parentNode;
+            if (!parentNode) return;
             
-            const width = parentWidth - margin.left - margin.right;
+            const width = parentNode.clientWidth - margin.left - margin.right;
             const height = 400 - margin.top - margin.bottom;
 
+            if (width <= 0) return;
+
             const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
-            
             const initialBalance = getInitialBalance();
             let cumulativeEquity = initialBalance;
-
-            // Membuat data point untuk grafik
             const chartData = [{ index: 0, equityUsd: initialBalance }];
-            [...tradingData]
-                .sort((a, b) => new Date(a.date) - new Date(b.date)) // Urutkan trading dari yang terlama
-                .forEach((trade, i) => {
-                    const pips = calculatePips(trade.pair, trade.position, trade.entryPrice, trade.exitPrice);
-                    const profit = calculateProfitInUsd(trade.pair, pips, trade.lotSize);
-                    cumulativeEquity += profit;
-                    chartData.push({ index: i + 1, equityUsd: cumulativeEquity });
-                });
+            [...tradingData].sort((a, b) => new Date(a.date) - new Date(b.date)).forEach((trade, i) => {
+                cumulativeEquity += calculateProfitInUsd(trade.pair, calculatePips(trade.pair, trade.position, trade.entryPrice, trade.exitPrice), trade.lotSize);
+                chartData.push({ index: i + 1, equityUsd: cumulativeEquity });
+            });
 
-            // Jangan gambar jika tidak ada data trading
             if (chartData.length <= 1) return;
 
-            // Pengaturan Sumbu X (berdasarkan jumlah trading)
-            const x = d3.scaleLinear()
-                .domain([0, chartData.length - 1])
-                .range([0, width]);
-
-            // Pengaturan Sumbu Y (berdasarkan nilai equity)
-            const y = d3.scaleLinear()
-                .domain(d3.extent(chartData, d => d.equityUsd)).nice()
-                .range([height, 0]);
-
-            // Menggambar area di bawah garis
-            g.append("path")
-                .datum(chartData)
-                .attr("fill", "#dcfce7")
-                .attr("d", d3.area()
-                    .x(d => x(d.index))
-                    .y0(y(initialBalance))
-                    .y1(d => y(d.equityUsd))
-                );
-
-            // Menggambar garis equity
-            g.append("path")
-                .datum(chartData)
-                .attr("fill", "none")
-                .attr("stroke", "#22c55e")
-                .attr("stroke-width", 2)
-                .attr("d", d3.line()
-                    .x(d => x(d.index))
-                    .y(d => y(d.equityUsd))
-                );
-
-            // Menambahkan Sumbu X ke grafik
-            g.append("g")
-                .attr("transform", `translate(0,${height})`)
-                .call(d3.axisBottom(x).ticks(Math.min(10, chartData.length - 1)).tickFormat(d3.format("d")));
-
-            // Menambahkan Sumbu Y ke grafik
-            g.append("g")
-                .call(d3.axisLeft(y).tickFormat(d3.format("$,.0f")));
+            const x = d3.scaleLinear().domain([0, chartData.length - 1]).range([0, width]);
+            const y = d3.scaleLinear().domain(d3.extent(chartData, d => d.equityUsd)).nice().range([height, 0]);
+            g.append("path").datum(chartData).attr("fill", "#dcfce7").attr("d", d3.area().x(d => x(d.index)).y0(y(initialBalance)).y1(d => y(d.equityUsd)));
+            g.append("path").datum(chartData).attr("fill", "none").attr("stroke", "#22c55e").attr("stroke-width", 2).attr("d", d3.line().x(d => x(d.index)).y(d => y(d.equityUsd)));
+            g.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).ticks(Math.min(10, chartData.length - 1)).tickFormat(d3.format("d")));
+            g.append("g").call(d3.axisLeft(y).tickFormat(d3.format("$,.0f")));
         }
 
         function resetForm() {
@@ -321,12 +276,9 @@
         ui.tradeForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const fields = Array.from(ui.tradeForm.elements).reduce((acc, el) => {
-                if (el.id && el.value) {
-                    acc[el.id] = el.type === 'number' ? parseFloat(el.value) : el.value;
-                }
+                if (el.id && el.value) { acc[el.id] = el.type === 'number' ? parseFloat(el.value) : el.value; }
                 return acc;
             }, {});
-            
             ui.addOrUpdateTradeBtn.disabled = true;
             ui.addOrUpdateTradeBtn.textContent = 'Menyimpan...';
 
@@ -345,7 +297,7 @@
             const { id } = e.target.dataset;
             if (e.target.classList.contains('btn-delete')) {
                 if (confirm('Anda yakin ingin menghapus data ini secara permanen?')) {
-                    deleteTrade(id);
+                    apiCall(`${airtableUrl}/${id}`, 'DELETE').then(fetchTrades);
                 }
             } else if (e.target.classList.contains('btn-edit')) {
                 const trade = tradingData.find(t => t.id === id);
@@ -376,4 +328,3 @@
     </script>
 </body>
 </html>
-
