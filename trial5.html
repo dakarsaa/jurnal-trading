@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dasbor Jurnal Trading Forex - Online</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; padding: 2rem; }
+        .container { background-color: #ffffff; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 1200px; margin: auto; }
+        .table-wrapper { max-height: 450px; overflow: auto; margin-bottom: 2rem; border: 1px solid #e5e7eb; border-radius: 0.5rem; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #e5e7eb; white-space: nowrap; }
+        th { background-color: #f9fafb; font-weight: 600; color: #374151; position: sticky; top: 0; z-index: 10; }
+        .profit { color: #10b981; font-weight: 600; }
+        .loss { color: #ef4444; font-weight: 600; }
+        .chart-container { width: 100%; height: 400px; margin-bottom: 2rem; }
+        .stats-container { background-color: #ffffff; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2rem; }
+        .summary-item { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px dashed #e5e7eb; }
+        .summary-item:last-child { border-bottom: none; }
+        .btn { padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
+        .btn-primary { background-color: #2563eb; color: white; }
+        .btn-secondary { background-color: #6b7280; color: white; }
+        .btn-edit, .btn-delete { padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; color: white; }
+        .btn-edit { background-color: #f59e0b; }
+        .btn-delete { background-color: #ef4444; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-3xl font-bold mb-6 text-gray-800 text-center">Dasbor Jurnal Trading Online</h1>
+        
+        <div id="loadingIndicator" class="text-center py-4" style="display: none;">
+            <div class="loader"></div>
+            <p>Memuat data dari database...</p>
+        </div>
+
+        <div id="dashboardContent">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 text-center">
+                <div class="bg-gray-100 p-4 rounded-lg shadow-sm"><h3 class="text-sm font-medium text-gray-500 uppercase">Saldo Saat Ini</h3><p id="currentBalanceValue" class="text-2xl font-bold text-gray-800 mt-1">$0.00</p></div>
+                <div class="bg-gray-100 p-4 rounded-lg shadow-sm"><h3 class="text-sm font-medium text-gray-500 uppercase">Total P/L</h3><p id="totalPlValue" class="text-2xl font-bold mt-1">$0.00</p></div>
+                <div class="bg-gray-100 p-4 rounded-lg shadow-sm"><h3 class="text-sm font-medium text-gray-500 uppercase">P/L %</h3><p id="plPercentageValue" class="text-2xl font-bold mt-1">0.00%</p></div>
+            </div>
+            <div style="display: flex; justify-content: center; margin-bottom: 1.5rem;"><label for="initialBalance" class="font-bold mr-2 self-center">Saldo Awal (USD):</label><input type="number" id="initialBalance" value="1000" min="0" step="100" class="p-2 border rounded"></div>
+            <h2 class="text-2xl font-bold mb-4 text-gray-800 text-center">Manajemen Trading</h2>
+            <form id="tradeForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-lg shadow-sm mb-6">
+                <div><label for="date">Tanggal & Waktu:</label><input type="datetime-local" id="date" class="w-full p-2 border rounded"></div>
+                <div><label for="pair">Pasangan Mata Uang:</label><input type="text" id="pair" placeholder="EUR/USD" class="w-full p-2 border rounded"></div>
+                <div><label for="lotSize">Ukuran Posisi (Lot):</label><input type="number" id="lotSize" step="0.01" min="0.01" class="w-full p-2 border rounded"></div>
+                <div><label for="position">Posisi:</label><select id="position" class="w-full p-2 border rounded"><option value="Buy">Buy</option><option value="Sell">Sell</option></select></div>
+                <div><label for="entryPrice">Harga Masuk:</label><input type="number" id="entryPrice" step="0.00001" class="w-full p-2 border rounded"></div>
+                <div><label for="exitPrice">Harga Keluar:</label><input type="number" id="exitPrice" step="0.00001" class="w-full p-2 border rounded"></div>
+                <div><label for="stopLoss">Stop Loss:</label><input type="number" id="stopLoss" step="0.00001" class="w-full p-2 border rounded"></div>
+                <div><label for="takeProfit">Take Profit:</label><input type="number" id="takeProfit" step="0.00001" class="w-full p-2 border rounded"></div>
+                <div><label for="timeframe">Timeframe:</label><select id="timeframe" class="w-full p-2 border rounded"><option>M15</option><option>M30</option><option>H1</option><option>H4</option><option>D1</option></select></div>
+                <div><label for="reason">Alasan/Strategi:</label><input type="text" id="reason" class="w-full p-2 border rounded"></div>
+                <div><label for="emotion">Emosi:</label><select id="emotion" class="w-full p-2 border rounded"><option>Yakin</option><option>Cemas</option><option>Tenang</option><option>Optimis</option></select></div>
+                <div><label for="lessons">Pelajaran:</label><input type="text" id="lessons" class="w-full p-2 border rounded"></div>
+                <div class="col-span-full flex gap-4 mt-4">
+                    <button type="submit" id="addOrUpdateTradeBtn" class="btn btn-primary">Tambah Trading</button>
+                    <button type="button" id="cancelEditBtn" class="btn btn-secondary" style="display:none;">Batal</button>
+                </div>
+            </form>
+            <h2 class="text-2xl font-bold my-6 text-gray-800 text-center">Data Histori Trading</h2>
+            <div class="table-wrapper"><table id="tradingTable"><thead><tr><th>Aksi</th><th>Tanggal</th><th>Pair</th><th>Posisi</th><th>P/L (USD)</th><th>Pips</th><th>Lot</th><th>R:R</th><th>Strategi</th></tr></thead><tbody></tbody></table></div>
+            <h2 class="text-2xl font-bold mb-4 text-gray-800 text-center">Grafik Equity (USD)</h2>
+            <div class="chart-container"><svg id="equityChartUsd"></svg></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                <div class="stats-container"><h2 class="text-2xl font-bold mb-4 text-center">Analisis Strategi</h2><div id="strategySummary"></div></div>
+                <div class="stats-container"><h2 class="text-2xl font-bold mb-4 text-center">Analisis Timeframe</h2><div id="timeframeSummary"></div></div>
+            </div>
+            <div class="stats-container"><h2 class="text-2xl font-bold mb-4 text-center">Statistik Performa</h2><table class="w-full"><tbody id="statisticsBody" class="divide-y"></tbody></table></div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', async function() {
+        // ==================================================================
+        // === KONFIGURASI WAJIB: GANTI DENGAN KUNCI RAHASIA ANDA ===
+        // ==================================================================
+        const AIRTABLE_API_KEY = "patgVfG7UrVD0cru3.f8411907bca108083167b58676e91078452dd530958923555bb0895e15d38457"; // Diawali dengan "pat..."
+        const AIRTABLE_BASE_ID = "app0SlHtg1Nnb0H9B";   // Diawali dengan "app..."
+        const AIRTABLE_TABLE_NAME = "Trades";
+        // ==================================================================
+
+        const airtableUrl = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_NAME}`;
+        let tradingData = []; // Ini akan diisi dari Airtable
+        let recordBeingEditedId = null;
+
+        // --- Element Selectors ---
+        const tradeForm = document.getElementById('tradeForm');
+        const addOrUpdateTradeBtn = document.getElementById('addOrUpdateTradeBtn');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+        const tableBody = document.querySelector('#tradingTable tbody');
+        const initialBalanceInput = document.getElementById('initialBalance');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const dashboardContent = document.getElementById('dashboardContent');
+
+        // --- Airtable API Functions ---
+        const apiHeaders = {
+            'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
+            'Content-Type': 'application/json'
+        };
+
+        async function fetchTrades() {
+            loadingIndicator.style.display = 'block';
+            dashboardContent.style.display = 'none';
+            try {
+                const response = await fetch(airtableUrl, { headers: apiHeaders });
+                if (!response.ok) throw new Error(`Error fetching data: ${response.statusText}`);
+                const data = await response.json();
+                // Ubah format data Airtable ke format yang lebih mudah digunakan aplikasi
+                tradingData = data.records.map(record => ({ id: record.id, ...record.fields }));
+                fullUpdate();
+            } catch (error) {
+                console.error("Gagal mengambil data dari Airtable:", error);
+                alert("Gagal memuat data dari Airtable. Periksa API Key, Base ID, dan koneksi internet Anda.");
+            } finally {
+                loadingIndicator.style.display = 'none';
+                dashboardContent.style.display = 'block';
+            }
+        }
+
+        async function createTrade(fields) {
+            try {
+                const response = await fetch(airtableUrl, {
+                    method: 'POST',
+                    headers: apiHeaders,
+                    body: JSON.stringify({ fields })
+                });
+                if (!response.ok) throw new Error('Gagal membuat data baru');
+                await fetchTrades(); // Muat ulang data setelah berhasil
+            } catch (error) {
+                console.error("Error creating trade:", error);
+                alert("Gagal menyimpan data baru.");
+            }
+        }
+
+        async function updateTrade(recordId, fields) {
+            try {
+                const response = await fetch(`${airtableUrl}/${recordId}`, {
+                    method: 'PATCH',
+                    headers: apiHeaders,
+                    body: JSON.stringify({ fields })
+                });
+                if (!response.ok) throw new Error('Gagal mengupdate data');
+                await fetchTrades(); // Muat ulang data
+            } catch (error) {
+                console.error("Error updating trade:", error);
+                alert("Gagal mengupdate data.");
+            }
+        }
+
+        async function deleteTrade(recordId) {
+            try {
+                const response = await fetch(`${airtableUrl}/${recordId}`, {
+                    method: 'DELETE',
+                    headers: apiHeaders
+                });
+                if (!response.ok) throw new Error('Gagal menghapus data');
+                await fetchTrades(); // Muat ulang data
+            } catch (error) {
+                console.error("Error deleting trade:", error);
+                alert("Gagal menghapus data.");
+            }
+        }
+
+        // --- Calculation Functions ---
+        function getInitialBalance() { return parseFloat(initialBalanceInput.value) || 0; }
+        function calculatePips(pair, position, entry, exit) {
+            const multiplier = pair && pair.toUpperCase().includes('JPY') ? 100 : 10000;
+            return parseFloat(((position === 'Buy' ? exit - entry : entry - exit) * multiplier).toFixed(1));
+        }
+        function calculateProfitInUsd(pair, pips, lotSize) {
+            const pipValue = pair && pair.toUpperCase().includes('JPY') ? 7 : 10;
+            return pips * lotSize * pipValue;
+        }
+        function calculateRiskReward(position, entry, sl, tp) {
+            if (!sl || !tp || !entry) return 'N/A';
+            const profit = Math.abs(position === 'Buy' ? tp - entry : entry - tp);
+            const loss = Math.abs(position === 'Buy' ? entry - sl : sl - entry);
+            return loss > 0 ? `1:${(profit / loss).toFixed(2)}` : 'Inf';
+        }
+
+        // --- UI Rendering Functions ---
+        function renderTable() {
+            tableBody.innerHTML = '';
+            if (tradingData.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="9" class="text-center text-gray-500">Belum ada data.</td></tr>`;
+                return;
+            }
+            const sortedData = [...tradingData].sort((a, b) => new Date(b.date) - new Date(a.date));
+            sortedData.forEach(trade => {
+                const pips = calculatePips(trade.pair, trade.position, trade.entryPrice, trade.exitPrice);
+                const profitUsd = calculateProfitInUsd(trade.pair, pips, trade.lotSize);
+                const rr = calculateRiskReward(trade.position, trade.entryPrice, trade.stopLoss, trade.takeProfit);
+                const profitClass = profitUsd >= 0 ? 'profit' : 'loss';
+                const row = document.createElement('tr');
+                row.dataset.id = trade.id;
+                row.innerHTML = `
+                    <td class="flex gap-2"><button class="btn-edit" data-id="${trade.id}">E</button><button class="btn-delete" data-id="${trade.id}">H</button></td>
+                    <td>${new Date(trade.date).toLocaleDateString('id-ID')}</td>
+                    <td>${trade.pair || ''}</td>
+                    <td>${trade.position || ''}</td>
+                    <td class="${profitClass}">$${profitUsd.toFixed(2)}</td>
+                    <td class="${pips >= 0 ? 'profit' : 'loss'}">${pips}</td>
+                    <td>${trade.lotSize || 0}</td>
+                    <td>${rr}</td>
+                    <td>${trade.reason || ''}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function updateAllStats() {
+            // Summary Stats
+            const initialBalance = getInitialBalance();
+            const totalPl = tradingData.reduce((acc, trade) => acc + calculateProfitInUsd(trade.pair, calculatePips(trade.pair, trade.position, trade.entryPrice, trade.exitPrice), trade.lotSize), 0);
+            document.getElementById('currentBalanceValue').textContent = `$${(initialBalance + totalPl).toFixed(2)}`;
+            document.getElementById('totalPlValue').textContent = `$${totalPl.toFixed(2)}`;
+            document.getElementById('plPercentageValue').textContent = `${initialBalance > 0 ? (totalPl / initialBalance * 100).toFixed(2) : 0}%`;
+            document.getElementById('totalPlValue').className = `text-2xl font-bold mt-1 ${totalPl >= 0 ? 'profit' : 'loss'}`;
+            document.getElementById('plPercentageValue').className = `text-2xl font-bold mt-1 ${totalPl >= 0 ? 'profit' : 'loss'}`;
+
+            // Detailed Stats
+            const stats = tradingData.reduce((acc, trade) => {
+                const pips = calculatePips(trade.pair, trade.position, trade.entryPrice, trade.exitPrice);
+                const profit = calculateProfitInUsd(trade.pair, pips, trade.lotSize);
+                acc.total++;
+                if (profit > 0) { acc.wins++; acc.grossProfit += profit; } else { acc.losses++; acc.grossLoss += profit; }
+                return acc;
+            }, { total: 0, wins: 0, losses: 0, grossProfit: 0, grossLoss: 0 });
+            const winRate = stats.total > 0 ? (stats.wins / stats.total) * 100 : 0;
+            const profitFactor = stats.grossLoss !== 0 ? Math.abs(stats.grossProfit / stats.grossLoss) : Infinity;
+            document.getElementById('statisticsBody').innerHTML = `
+                <tr><td class="py-2">Total Trades</td><td class="text-right">${stats.total}</td></tr>
+                <tr><td class="py-2">Win Rate</td><td class="text-right">${winRate.toFixed(2)}%</td></tr>
+                <tr><td class="py-2">Profit Factor</td><td class="text-right">${profitFactor === Infinity ? 'Inf' : profitFactor.toFixed(2)}</td></tr>
+            `;
+
+            // Strategy & Timeframe Summary
+            const updateSummary = (containerId, key) => {
+                const summary = tradingData.reduce((acc, trade) => {
+                    const k = trade[key] || 'N/A';
+                    if (!acc[k]) acc[k] = { total: 0, wins: 0 };
+                    acc[k].total++;
+                    if (calculatePips(trade.pair, trade.position, trade.entryPrice, trade.exitPrice) > 0) acc[k].wins++;
+                    return acc;
+                }, {});
+                const container = document.getElementById(containerId);
+                container.innerHTML = '';
+                Object.entries(summary).sort().forEach(([k, v]) => {
+                    container.innerHTML += `<div class="summary-item"><span>${k}</span><span class="percentage">${((v.wins / v.total) * 100).toFixed(1)}%</span></div>`;
+                });
+            };
+            updateSummary('strategySummary', 'reason');
+            updateSummary('timeframeSummary', 'timeframe');
+        }
+
+        function drawEquityChart() {
+            const svg = d3.select("#equityChartUsd");
+            svg.selectAll("*").remove();
+            const margin = { top: 20, right: 30, bottom: 40, left: 50 };
+            const width = svg.node().parentNode.clientWidth - margin.left - margin.right;
+            const height = 400 - margin.top - margin.bottom;
+            const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+            
+            const initialBalance = getInitialBalance();
+            let cumulativeEquity = initialBalance;
+            const chartData = [{ index: 0, equityUsd: initialBalance }];
+            [...tradingData].sort((a, b) => new Date(a.date) - new Date(b.date)).forEach((trade, i) => {
+                cumulativeEquity += calculateProfitInUsd(trade.pair, calculatePips(trade.pair, trade.position, trade.entryPrice, trade.exitPrice), trade.lotSize);
+                chartData.push({ index: i + 1, equityUsd: cumulativeEquity });
+            });
+
+            if (chartData.length <= 1) return;
+            const x = d3.scaleLinear().domain([0, chartData.length - 1]).range([0, width]);
+            const y = d3.scaleLinear().domain(d3.extent(chartData, d => d.equityUsd)).nice().range([height, 0]);
+            g.append("path").datum(chartData).attr("fill", "#dcfce7").attr("d", d3.area().x(d => x(d.index)).y0(y(initialBalance)).y1(d => y(d.equityUsd)));
+            g.append("path").datum(chartData).attr("fill", "none").attr("stroke", "#22c55e").attr("stroke-width", 2).attr("d", d3.line().x(d => x(d.index)).y(d => y(d.equityUsd)));
+            g.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).ticks(Math.min(10, chartData.length-1)).tickFormat(d3.format("d")));
+            g.append("g").call(d3.axisLeft(y).tickFormat(d3.format("$,.0f")));
+        }
+
+        // --- Event Handlers & Main Logic ---
+        function resetForm() {
+            tradeForm.reset();
+            recordBeingEditedId = null;
+            addOrUpdateTradeBtn.textContent = 'Tambah Trading';
+            cancelEditBtn.style.display = 'none';
+            document.getElementById('date').value = new Date().toISOString().slice(0, 16);
+        }
+
+        tradeForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fields = {
+                date: document.getElementById('date').value,
+                pair: document.getElementById('pair').value,
+                lotSize: parseFloat(document.getElementById('lotSize').value),
+                position: document.getElementById('position').value,
+                entryPrice: parseFloat(document.getElementById('entryPrice').value),
+                exitPrice: parseFloat(document.getElementById('exitPrice').value),
+                stopLoss: parseFloat(document.getElementById('stopLoss').value),
+                takeProfit: parseFloat(document.getElementById('takeProfit').value),
+                timeframe: document.getElementById('timeframe').value,
+                reason: document.getElementById('reason').value,
+                emotion: document.getElementById('emotion').value,
+                lessons: document.getElementById('lessons').value
+            };
+            
+            addOrUpdateTradeBtn.disabled = true;
+            addOrUpdateTradeBtn.textContent = 'Menyimpan...';
+
+            if (recordBeingEditedId) {
+                await updateTrade(recordBeingEditedId, fields);
+            } else {
+                await createTrade(fields);
+            }
+            
+            addOrUpdateTradeBtn.disabled = false;
+            resetForm();
+        });
+
+        tableBody.addEventListener('click', (e) => {
+            const { id } = e.target.dataset;
+            if (e.target.classList.contains('btn-delete')) {
+                if (confirm('Anda yakin ingin menghapus data ini secara permanen?')) {
+                    deleteTrade(id);
+                }
+            } else if (e.target.classList.contains('btn-edit')) {
+                const trade = tradingData.find(t => t.id === id);
+                recordBeingEditedId = id;
+                Object.keys(trade).forEach(key => {
+                    const el = document.getElementById(key);
+                    if (el) el.value = trade[key];
+                });
+                addOrUpdateTradeBtn.textContent = 'Update Trading';
+                cancelEditBtn.style.display = 'inline-block';
+                tradeForm.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+
+        cancelEditBtn.addEventListener('click', resetForm);
+        initialBalanceInput.addEventListener('change', fullUpdate);
+        window.addEventListener('resize', drawEquityChart);
+
+        function fullUpdate() {
+            renderTable();
+            updateAllStats();
+            drawEquityChart();
+        }
+
+        // --- Initial Load ---
+        fetchTrades();
+    });
+    </script>
+</body>
+</html>
