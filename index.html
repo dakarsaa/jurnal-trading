@@ -234,35 +234,246 @@
         }
 
         function drawEquityChart() {
-            const svg = d3.select("#equityChartUsd");
-            svg.selectAll("*").remove();
-            const parentNode = svg.node().parentNode;
-            if (!parentNode || parentNode.clientWidth === 0) return;
+    const svg = d3.select("#equityChartUsd");
+    svg.selectAll("*").remove();
+    
+    const container = document.querySelector('.chart-container');
+    if (!container) {
+        console.error("Chart container not found");
+        return;
+    }
+    
+    // Set SVG dimensions
+    const containerWidth = container.clientWidth;
+    const containerHeight = 400;
+    
+    if (containerWidth === 0) {
+        console.warn("Container width is 0, retrying in 100ms");
+        setTimeout(drawEquityChart, 100);
+        return;
+    }
+    
+    svg.attr("width", containerWidth).attr("height", containerHeight);
+    
+    const margin = { top: 20, right: 30, bottom: 40, left: 80 };
+    const width = containerWidth - margin.left - margin.right;
+    const height = containerHeight - margin.top - margin.bottom;
 
-            const margin = { top: 20, right: 30, bottom: 40, left: 60 };
-            const width = parentNode.clientWidth - margin.left - margin.right;
-            const height = 400 - margin.top - margin.bottom;
+    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+    
+    // Prepare data
+    const initialBalance = getInitialBalance();
+    let cumulativeEquity = initialBalance;
+    const chartData = [{ index: 0, equityUsd: initialBalance, date: "Start" }];
+    
+    // Sort trades by date
+    const sortedTrades = [...tradingData].sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    sortedTrades.forEach((trade, i) => {
+        const pips = calculatePips(trade.pair, trade.position, trade.entryPrice, trade.exitPrice);
+        const profitUsd = calculateProfitInUsd(trade.pair, pips, trade.lotSize);
+        cumulativeEquity += profitUsd;
+        chartData.push({ 
+            index: i + 1, 
+            equityUsd: cumulativeEquity, 
+            date: new Date(trade.date).toLocaleDateString('id-ID'),
+            profit: profitUsd
+        });
+    });
 
-            const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
-            const initialBalance = getInitialBalance();
-            let cumulativeEquity = initialBalance;
-            const chartData = [{ index: 0, equityUsd: initialBalance }];
-            [...tradingData].sort((a, b) => new Date(a.date) - new Date(b.date)).forEach((trade, i) => {
-                cumulativeEquity += calculateProfitInUsd(trade.pair, calculatePips(trade.pair, trade.position, trade.entryPrice, trade.exitPrice), trade.lotSize);
-                chartData.push({ index: i + 1, equityUsd: cumulativeEquity });
-            });
-
-            if (chartData.length <= 1) return;
-
-            const x = d3.scaleLinear().domain([0, chartData.length - 1]).range([0, width]);
-            const y = d3.scaleLinear().domain(d3.extent(chartData, d => d.equityUsd)).nice().range([height, 0]);
+    // If no data, show initial balance line only
+    if (chartData.length <= 1) {
+        const y = d3.scaleLinear()
+            .domain([initialBalance * 0.9, initialBalance * 1.1])
+            .range([height, 0]);
             
-            g.append("path").datum(chartData).attr("fill", "#dcfce7").attr("d", d3.area().x(d => x(d.index)).y0(y(initialBalance)).y1(d => y(d.equityUsd)));
-            g.append("path").datum(chartData).attr("fill", "none").attr("stroke", "#22c55e").attr("stroke-width", 2).attr("d", d3.line().x(d => x(d.index)).y(d => y(d.equityUsd)));
-            g.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).ticks(Math.min(10, chartData.length - 1)).tickFormat(d3.format("d")));
-            g.append("g").call(d3.axisLeft(y).tickFormat(d3.format("$,.0f")));
-        }
+        // Draw initial balance line
+        g.append("line")
+            .attr("x1", 0)
+            .attr("x2", width)
+            .attr("y1", y(initialBalance))
+            .attr("y2", y(initialBalance))
+            .attr("stroke", "#22c55e")
+            .attr("stroke-width", 2)
+            .attr("stroke-dasharray", "5,5");
+            
+        // Add axes
+        g.append("g")
+            .attr("transform", `translate(0,${height})`)
+            .call(d3.axisBottom(d3.scaleLinear().domain([0, 10]).range([0, width])));
+            
+        g.append("g")
+            .call(d3.axisLeft(y).tickFormat(d3.format("$,.0f")));
+            
+        // Add label
+        g.append("text")
+            .attr("x", width / 2)
+            .attr("y", height / 2)
+            .attr("text-anchor", "middle")
+            .attr("fill", "#6b7280")
+            .text("Belum ada data trading");
+            
+        return;
+    }
 
+    // Create scales
+    const x = d3.scaleLinear()
+        .domain([0, chartData.length - 1])
+        .range([0, width]);
+
+    const yExtent = d3.extent(chartData, d => d.equityUsd);
+    const yPadding = (yExtent[1] - yExtent[0]) * 0.1 || initialBalance * 0.1;
+    const y = d3.scaleLinear()
+        .domain([yExtent[0] - yPadding, yExtent[1] + yPadding])
+        .nice()
+        .range([height, 0]);
+
+    // Create line generator
+    const line = d3.line()
+        .x(d => x(d.index))
+        .y(d => y(d.equityUsd))
+        .curve(d3.curveMonotoneX);
+
+    // Create area generator
+    const area = d3.area()
+        .x(d => x(d.index))
+        .y0(y(initialBalance))
+        .y1(d => y(d.equityUsd))
+        .curve(d3.curveMonotoneX);
+
+    // Add gradient definition
+    const defs = svg.append("defs");
+    const gradient = defs.append("linearGradient")
+        .attr("id", "equityGradient")
+        .attr("gradientUnits", "userSpaceOnUse")
+        .attr("x1", 0).attr("y1", y(Math.max(...chartData.map(d => d.equityUsd))))
+        .attr("x2", 0).attr("y2", y(Math.min(...chartData.map(d => d.equityUsd))));
+
+    gradient.append("stop")
+        .attr("offset", "0%")
+        .attr("stop-color", "#22c55e")
+        .attr("stop-opacity", 0.3);
+
+    gradient.append("stop")
+        .attr("offset", "100%")
+        .attr("stop-color", "#22c55e")
+        .attr("stop-opacity", 0.1);
+
+    // Draw area
+    g.append("path")
+        .datum(chartData)
+        .attr("fill", "url(#equityGradient)")
+        .attr("d", area);
+
+    // Draw line
+    g.append("path")
+        .datum(chartData)
+        .attr("fill", "none")
+        .attr("stroke", "#22c55e")
+        .attr("stroke-width", 2)
+        .attr("d", line);
+
+    // Add initial balance reference line
+    g.append("line")
+        .attr("x1", 0)
+        .attr("x2", width)
+        .attr("y1", y(initialBalance))
+        .attr("y2", y(initialBalance))
+        .attr("stroke", "#6b7280")
+        .attr("stroke-width", 1)
+        .attr("stroke-dasharray", "3,3")
+        .attr("opacity", 0.5);
+
+    // Add dots for data points
+    g.selectAll(".dot")
+        .data(chartData.slice(1)) // Skip initial point
+        .enter().append("circle")
+        .attr("class", "dot")
+        .attr("cx", d => x(d.index))
+        .attr("cy", d => y(d.equityUsd))
+        .attr("r", 3)
+        .attr("fill", d => d.profit >= 0 ? "#22c55e" : "#ef4444")
+        .attr("stroke", "white")
+        .attr("stroke-width", 1);
+
+    // Add X axis
+    const xAxis = g.append("g")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(x)
+            .ticks(Math.min(10, chartData.length - 1))
+            .tickFormat(d3.format("d")));
+
+    // Add Y axis
+    g.append("g")
+        .call(d3.axisLeft(y).tickFormat(d3.format("$,.0f")));
+
+    // Add axis labels
+    g.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 0 - margin.left)
+        .attr("x", 0 - (height / 2))
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .style("font-size", "12px")
+        .style("fill", "#6b7280")
+        .text("Equity (USD)");
+
+    g.append("text")
+        .attr("transform", `translate(${width / 2}, ${height + margin.bottom - 5})`)
+        .style("text-anchor", "middle")
+        .style("font-size", "12px")
+        .style("fill", "#6b7280")
+        .text("Trade Sequence");
+
+    // Add tooltip
+    const tooltip = d3.select("body").append("div")
+        .attr("class", "tooltip")
+        .style("position", "absolute")
+        .style("background", "rgba(0, 0, 0, 0.8)")
+        .style("color", "white")
+        .style("padding", "8px")
+        .style("border-radius", "4px")
+        .style("font-size", "12px")
+        .style("pointer-events", "none")
+        .style("opacity", 0)
+        .style("z-index", 1000);
+
+    // Add invisible overlay for mouse events
+    const overlay = g.append("rect")
+        .attr("width", width)
+        .attr("height", height)
+        .style("fill", "none")
+        .style("pointer-events", "all");
+
+    overlay.on("mousemove", function(event) {
+        const mouseX = d3.pointer(event, this)[0];
+        const index = Math.round(x.invert(mouseX));
+        
+        if (index >= 0 && index < chartData.length) {
+            const data = chartData[index];
+            tooltip.transition().duration(200).style("opacity", 0.9);
+            tooltip.html(`
+                <div><strong>Trade #${index}</strong></div>
+                <div>Equity: $${data.equityUsd.toFixed(2)}</div>
+                ${data.profit !== undefined ? `<div>P/L: $${data.profit.toFixed(2)}</div>` : ''}
+                ${data.date !== "Start" ? `<div>Date: ${data.date}</div>` : ''}
+            `)
+            .style("left", (event.pageX + 10) + "px")
+            .style("top", (event.pageY - 10) + "px");
+        }
+    })
+    .on("mouseout", function() {
+        tooltip.transition().duration(500).style("opacity", 0);
+    });
+
+    // Remove tooltip when component is destroyed
+    setTimeout(() => {
+        const existingTooltip = d3.select(".tooltip");
+        if (!existingTooltip.empty()) {
+            existingTooltip.remove();
+        }
+    }, 100);
+}
         function resetForm() {
             ui.tradeForm.reset();
             recordBeingEditedId = null;
@@ -356,3 +567,4 @@
     </script>
 </body>
 </html>
+
