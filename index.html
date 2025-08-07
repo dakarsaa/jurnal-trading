@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dasbor Jurnal Trading Forex - Stabil</title>
+    <title>Dasbor Jurnal Trading Forex - Final</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
@@ -17,25 +17,23 @@
         .loss { color: #ef4444; font-weight: 600; }
         .chart-container { width: 100%; height: 400px; margin-bottom: 2rem; }
         .stats-container { background-color: #ffffff; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2rem; }
-        .summary-item { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px dashed #e5e7eb; }
-        .summary-item:last-child { border-bottom: none; }
         .btn { padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
         .btn-primary { background-color: #2563eb; color: white; }
         .btn-secondary { background-color: #6b7280; color: white; }
         .btn-edit, .btn-delete { padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; color: white; }
         .btn-edit { background-color: #f59e0b; }
         .btn-delete { background-color: #ef4444; }
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite; margin: 20px auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #syncStatus { font-size: 0.8rem; color: #6b7280; text-align: center; margin-top: -1rem; margin-bottom: 1rem; }
+        .summary-item { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px dashed #e5e7eb; }
+        .summary-item:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1 class="text-3xl font-bold mb-6 text-gray-800 text-center">Dasbor Jurnal Trading Online</h1>
+        <div id="syncStatus">Memuat data...</div>
         
-        <div id="loadingIndicator" class="text-center py-4"><div class="loader"></div><p>Menghubungkan ke Database...</p></div>
-
-        <div id="dashboardContent" style="display: none;">
+        <div id="dashboardContent">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 text-center">
                 <div class="bg-gray-100 p-4 rounded-lg shadow-sm"><h3 class="text-sm font-medium text-gray-500 uppercase">Saldo Saat Ini</h3><p id="currentBalanceValue" class="text-2xl font-bold text-gray-800 mt-1">$0.00</p></div>
                 <div class="bg-gray-100 p-4 rounded-lg shadow-sm"><h3 class="text-sm font-medium text-gray-500 uppercase">Total P/L</h3><p id="totalPlValue" class="text-2xl font-bold mt-1">$0.00</p></div>
@@ -100,44 +98,37 @@
             cancelEditBtn: document.getElementById('cancelEditBtn'),
             tableBody: document.querySelector('#tradingTable tbody'),
             initialBalanceInput: document.getElementById('initialBalance'),
-            loadingIndicator: document.getElementById('loadingIndicator'),
-            dashboardContent: document.getElementById('dashboardContent'),
+            syncStatus: document.getElementById('syncStatus')
         };
 
         const apiHeaders = { 'Authorization': `Bearer ${AIRTABLE_API_KEY}`, 'Content-Type': 'application/json' };
 
-        async function apiCall(url, method = 'GET', body = null) {
+        // --- CACHING LOGIC ---
+        function saveToCache(data) { localStorage.setItem('tradingDataCache', JSON.stringify(data)); }
+        function loadFromCache() {
+            const cachedData = localStorage.getItem('tradingDataCache');
+            return cachedData ? JSON.parse(cachedData) : [];
+        }
+
+        async function syncWithAirtable() {
+            ui.syncStatus.textContent = 'Menyinkronkan dengan server...';
             try {
-                const options = { method, headers: apiHeaders };
-                if (body) options.body = JSON.stringify(body);
-                const response = await fetch(url, options);
-                if (!response.ok) {
-                    const errData = await response.json();
-                    console.error('API Error:', errData);
-                    throw new Error(`API Error: ${response.statusText}`);
-                }
-                return method === 'DELETE' ? response.ok : response.json();
+                const response = await fetch(airtableUrl, { headers: apiHeaders });
+                if (!response.ok) throw new Error('Gagal mengambil data dari server');
+                const data = await response.json();
+                const freshData = data.records.map(record => ({ id: record.id, ...record.fields }));
+                
+                tradingData = freshData;
+                saveToCache(freshData);
+                fullUpdate();
+                ui.syncStatus.textContent = `Data disinkronkan pada ${new Date().toLocaleTimeString()}`;
             } catch (error) {
-                console.error(`Error with ${method} request to ${url}:`, error);
-                alert(`Terjadi kesalahan jaringan. Gagal ${method === 'GET' ? 'memuat' : 'menyimpan'} data. Periksa console untuk detail.`);
-                return null;
+                console.error("Sinkronisasi gagal:", error);
+                ui.syncStatus.textContent = 'Gagal sinkronisasi, menampilkan data offline.';
             }
         }
 
-        async function fetchTrades() {
-            ui.loadingIndicator.style.display = 'block';
-            ui.dashboardContent.style.display = 'none';
-            const data = await apiCall(airtableUrl);
-            
-            if (data && data.records) {
-                tradingData = data.records.map(record => ({ id: record.id, ...record.fields }));
-            }
-            // Tampilkan konten dashboard bahkan jika pengambilan data gagal, agar tidak stuck di loading
-            ui.loadingIndicator.style.display = 'none';
-            ui.dashboardContent.style.display = 'block';
-            fullUpdate();
-        }
-
+        // --- CORE FUNCTIONS ---
         function getInitialBalance() { return parseFloat(ui.initialBalanceInput.value) || 0; }
         function calculatePips(pair, position, entry, exit) {
             if (!pair || !position || typeof entry !== 'number' || typeof exit !== 'number') return 0;
@@ -246,10 +237,7 @@
             const svg = d3.select("#equityChartUsd");
             svg.selectAll("*").remove();
             const parentNode = svg.node().parentNode;
-            if (!parentNode || parentNode.clientWidth === 0) {
-                console.warn("Chart container not visible or has no width, skipping render.");
-                return;
-            }
+            if (!parentNode || parentNode.clientWidth === 0) return;
 
             const margin = { top: 20, right: 30, bottom: 40, left: 60 };
             const width = parentNode.clientWidth - margin.left - margin.right;
@@ -283,8 +271,8 @@
             ui.cancelEditBtn.style.display = 'none';
             document.getElementById('date').value = new Date().toISOString().slice(0, 16);
         }
-
-        ui.tradeForm.addEventListener('submit', async (e) => {
+        
+        async function handleFormSubmit(e) {
             e.preventDefault();
             const fields = Array.from(ui.tradeForm.elements).reduce((acc, el) => {
                 if (el.id && el.value) { acc[el.id] = el.type === 'number' ? parseFloat(el.value) : el.value; }
@@ -293,18 +281,33 @@
             ui.addOrUpdateTradeBtn.disabled = true;
             ui.addOrUpdateTradeBtn.textContent = 'Menyimpan...';
 
-            let success = false;
+            let response;
             if (recordBeingEditedId) {
-                success = await apiCall(`${airtableUrl}/${recordBeingEditedId}`, 'PATCH', { fields });
+                response = await fetch(`${airtableUrl}/${recordBeingEditedId}`, { method: 'PATCH', headers: apiHeaders, body: JSON.stringify({ fields }) });
             } else {
-                success = await apiCall(airtableUrl, 'POST', { fields });
+                response = await fetch(airtableUrl, { method: 'POST', headers: apiHeaders, body: JSON.stringify({ fields }) });
             }
             
-            if (success) {
-                await fetchTrades();
+            if (response.ok) {
+                await syncWithAirtable();
+            } else {
+                alert("Gagal menyimpan data ke server.");
             }
             resetForm();
-        });
+        }
+
+        async function handleDelete(id) {
+            if (confirm('Anda yakin ingin menghapus data ini secara permanen?')) {
+                const response = await fetch(`${airtableUrl}/${id}`, { method: 'DELETE', headers: apiHeaders });
+                if (response.ok) {
+                    await syncWithAirtable();
+                } else {
+                    alert("Gagal menghapus data dari server.");
+                }
+            }
+        }
+
+        ui.tradeForm.addEventListener('submit', handleFormSubmit);
 
         ui.tableBody.addEventListener('click', (e) => {
             const button = e.target.closest('button');
@@ -312,9 +315,7 @@
             const id = button.dataset.id;
             
             if (button.classList.contains('btn-delete')) {
-                if (confirm('Anda yakin ingin menghapus data ini secara permanen?')) {
-                    apiCall(`${airtableUrl}/${id}`, 'DELETE').then(fetchTrades);
-                }
+                handleDelete(id);
             } else if (button.classList.contains('btn-edit')) {
                 const trade = tradingData.find(t => t.id === id);
                 recordBeingEditedId = id;
@@ -338,8 +339,19 @@
             drawEquityChart();
         }
 
-        resetForm();
-        fetchTrades();
+        // --- Initial Load Logic ---
+        function initialize() {
+            resetForm();
+            tradingData = loadFromCache();
+            if (tradingData.length > 0) {
+                ui.syncStatus.textContent = 'Menampilkan data dari cache...';
+                fullUpdate();
+            }
+            // Selalu coba sinkronisasi setelah memuat dari cache
+            syncWithAirtable();
+        }
+
+        initialize();
     });
     </script>
 </body>
