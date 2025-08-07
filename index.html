@@ -30,12 +30,12 @@
 </head>
 <body>
     <div class="container">
-        <h1 class="text-3xl font-bold mb-6 text-gray-800 text-center">Dasbor Jurnal Trading Online</h1>
-        <div id="syncStatus">Memuat data...</div>
+        <h1 class="text-3xl font-bold mb-6 text-gray-800 text-center">Dakarsa Trading Journal</h1>
+        <div id="syncStatus">Loading data...</div>
         
         <div id="dashboardContent">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 text-center">
-                <div class="bg-gray-100 p-4 rounded-lg shadow-sm"><h3 class="text-sm font-medium text-gray-500 uppercase">Saldo Saat Ini</h3><p id="currentBalanceValue" class="text-2xl font-bold text-gray-800 mt-1">$0.00</p></div>
+                <div class="bg-gray-100 p-4 rounded-lg shadow-sm"><h3 class="text-sm font-medium text-gray-500 uppercase">Current Balance</h3><p id="currentBalanceValue" class="text-2xl font-bold text-gray-800 mt-1">$0.00</p></div>
                 <div class="bg-gray-100 p-4 rounded-lg shadow-sm"><h3 class="text-sm font-medium text-gray-500 uppercase">Total P/L</h3><p id="totalPlValue" class="text-2xl font-bold mt-1">$0.00</p></div>
                 <div class="bg-gray-100 p-4 rounded-lg shadow-sm"><h3 class="text-sm font-medium text-gray-500 uppercase">P/L %</h3><p id="plPercentageValue" class="text-2xl font-bold mt-1">0.00%</p></div>
             </div>
@@ -44,43 +44,43 @@
     <input type="number" id="initialBalance" value="1000" min="0" step="100" class="p-2 border rounded">
     <label class="ml-4 self-center">
         <input type="checkbox" id="toggleInitialBalance" class="mr-1">
-        Sembunyikan
+        Hide
     </label>
     </div>
-            <h2 class="text-2xl font-bold mb-4 text-gray-800 text-center">Manajemen Trading</h2>
+            <h2 class="text-2xl font-bold mb-4 text-gray-800 text-center">Trading Management</h2>
             <form id="tradeForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-lg shadow-sm mb-6">
-                <div><label for="date">Tanggal & Waktu:</label><input type="datetime-local" id="date" class="w-full p-2 border rounded"></div>
+                <div><label for="date">Date & Time:</label><input type="datetime-local" id="date" class="w-full p-2 border rounded"></div>
                 <div><label for="pair">Pair:</label><input type="text" id="pair" placeholder="EUR/USD" class="w-full p-2 border rounded"></div>
                 <div><label for="lotSize">Lot:</label><input type="number" id="lotSize" step="0.01" min="0.01" class="w-full p-2 border rounded"></div>
-                <div><label for="position">Posisi:</label><select id="position" class="w-full p-2 border rounded"><option value="Buy">Buy</option><option value="Sell">Sell</option></select></div>
-                <div><label for="entryPrice">Harga Masuk:</label><input type="number" id="entryPrice" step="0.00001" class="w-full p-2 border rounded"></div>
-                <div><label for="exitPrice">Harga Keluar:</label><input type="number" id="exitPrice" step="0.00001" class="w-full p-2 border rounded"></div>
+                <div><label for="position">Position:</label><select id="position" class="w-full p-2 border rounded"><option value="Buy">Buy</option><option value="Sell">Sell</option></select></div>
+                <div><label for="entryPrice">Entry Price:</label><input type="number" id="entryPrice" step="0.00001" class="w-full p-2 border rounded"></div>
+                <div><label for="exitPrice">Exit Price:</label><input type="number" id="exitPrice" step="0.00001" class="w-full p-2 border rounded"></div>
                 <div><label for="stopLoss">Stop Loss:</label><input type="number" id="stopLoss" step="0.00001" class="w-full p-2 border rounded"></div>
                 <div><label for="takeProfit">Take Profit:</label><input type="number" id="takeProfit" step="0.00001" class="w-full p-2 border rounded"></div>
                 <div><label for="timeframe">Timeframe:</label><select id="timeframe" class="w-full p-2 border rounded"><option>M15</option><option>M30</option><option>H1</option><option>H4</option><option>D1</option></select></div>
-                <div><label for="reason">Strategi:</label><input type="text" id="reason" class="w-full p-2 border rounded"></div>
-                <div><label for="emotion">Emosi:</label><select id="emotion" class="w-full p-2 border rounded"><option>Yakin</option><option>Cemas</option><option>Tenang</option><option>Optimis</option></select></div>
-                <div><label for="lessons">Pelajaran:</label><input type="text" id="lessons" class="w-full p-2 border rounded"></div>
+                <div><label for="reason">Strategy:</label><input type="text" id="reason" class="w-full p-2 border rounded"></div>
+                <div><label for="emotion">Emotion:</label><select id="emotion" class="w-full p-2 border rounded"><option>Yakin</option><option>Cemas</option><option>Tenang</option><option>Optimis</option></select></div>
+                <div><label for="lessons">Remarks:</label><input type="text" id="lessons" class="w-full p-2 border rounded"></div>
                 <div class="col-span-full flex gap-4 mt-4">
-                    <button type="submit" id="addOrUpdateTradeBtn" class="btn btn-primary">Tambah Trading</button>
-                    <button type="button" id="cancelEditBtn" class="btn btn-secondary" style="display:none;">Batal</button>
+                    <button type="submit" id="addOrUpdateTradeBtn" class="btn btn-primary">Add Trading</button>
+                    <button type="button" id="cancelEditBtn" class="btn btn-secondary" style="display:none;">Cancel</button>
                 </div>
             </form>
-            <h2 class="text-2xl font-bold my-6 text-gray-800 text-center">Data Histori Trading</h2>
-            <div class="table-wrapper"><table id="tradingTable"><thead><tr><th>Aksi</th><th>Tanggal</th><th>Pair</th><th>Posisi</th><th>P/L (USD)</th><th>Pips</th><th>Lot</th><th>R:R</th><th>Strategi</th></tr></thead><tbody></tbody></table></div>
-            <h2 class="text-2xl font-bold mb-4 text-gray-800 text-center">Grafik Equity (USD)</h2>
+            <h2 class="text-2xl font-bold my-6 text-gray-800 text-center">Trading History</h2>
+            <div class="table-wrapper"><table id="tradingTable"><thead><tr><th>Action</th><th>Date</th><th>Pair</th><th>Position</th><th>P/L (USD)</th><th>Pips</th><th>Lot</th><th>R:R</th><th>Strategy</th></tr></thead><tbody></tbody></table></div>
+            <h2 class="text-2xl font-bold mb-4 text-gray-800 text-center">Balance (USD)</h2>
             <div class="chart-container"><svg id="equityChartUsd"></svg></div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-                <div class="stats-container"><h2 class="text-2xl font-bold mb-4 text-center">Analisis Strategi</h2><div id="strategySummary"></div></div>
-                <div class="stats-container"><h2 class="text-2xl font-bold mb-4 text-center">Analisis Timeframe</h2><div id="timeframeSummary"></div></div>
+                <div class="stats-container"><h2 class="text-2xl font-bold mb-4 text-center">Strategy Analysis</h2><div id="strategySummary"></div></div>
+                <div class="stats-container"><h2 class="text-2xl font-bold mb-4 text-center">Timeframe Analysis</h2><div id="timeframeSummary"></div></div>
             </div>
-            <div class="stats-container"><h2 class="text-2xl font-bold mb-4 text-center">Statistik Performa Trading</h2><table class="w-full"><tbody id="statisticsBody" class="divide-y"></tbody></table></div>
+            <div class="stats-container"><h2 class="text-2xl font-bold mb-4 text-center">Trading Performance</h2><table class="w-full"><tbody id="statisticsBody" class="divide-y"></tbody></table></div>
             <div class="stats-container">
-                <h2 class="text-2xl font-bold mb-4 text-gray-800 text-center">Performa Periodik</h2>
-                <h3 class="text-xl font-semibold mb-2 text-center">Mingguan</h3>
-                <div class="table-wrapper" style="max-height: 200px; border: none;"><table id="weeklyPerformanceTable" class="w-full"><thead><tr><th>Minggu</th><th>Trades</th><th>Win Rate</th><th>Profit (USD)</th></tr></thead><tbody></tbody></table></div>
-                <h3 class="text-xl font-semibold my-4 text-center">Bulanan</h3>
-                <div class="table-wrapper" style="max-height: 200px; border: none;"><table id="monthlyPerformanceTable" class="w-full"><thead><tr><th>Bulan</th><th>Trades</th><th>Win Rate</th><th>Profit (USD)</th></tr></thead><tbody></tbody></table></div>
+                <h2 class="text-2xl font-bold mb-4 text-gray-800 text-center">Periodical Performance</h2>
+                <h3 class="text-xl font-semibold mb-2 text-center">Weekly</h3>
+                <div class="table-wrapper" style="max-height: 200px; border: none;"><table id="weeklyPerformanceTable" class="w-full"><thead><tr><th>Week</th><th>Trades</th><th>Win Rate</th><th>Profit (USD)</th></tr></thead><tbody></tbody></table></div>
+                <h3 class="text-xl font-semibold my-4 text-center">Monthly</h3>
+                <div class="table-wrapper" style="max-height: 200px; border: none;"><table id="monthlyPerformanceTable" class="w-full"><thead><tr><th>Month</th><th>Trades</th><th>Win Rate</th><th>Profit (USD)</th></tr></thead><tbody></tbody></table></div>
             </div>
         </div>
     </div>
@@ -205,8 +205,8 @@
                 <tr><td class="py-2">Winning Trades</td><td class="text-right">${stats.wins} (${winRate.toFixed(2)}%)</td></tr>
                 <tr><td class="py-2">Losing Trades</td><td class="text-right">${stats.losses}</td></tr>
                 <tr><td class="py-2">Profit Factor</td><td class="text-right">${profitFactor === Infinity ? 'Inf' : profitFactor.toFixed(2)}</td></tr>
-                <tr><td class="py-2">Rata-rata Keuntungan</td><td class="text-right profit">$${avgWin.toFixed(2)}</td></tr>
-                <tr><td class="py-2">Rata-rata Kerugian</td><td class="text-right loss">$${avgLoss.toFixed(2)}</td></tr>
+                <tr><td class="py-2">Average Profit</td><td class="text-right profit">$${avgWin.toFixed(2)}</td></tr>
+                <tr><td class="py-2">Average Loss</td><td class="text-right loss">$${avgLoss.toFixed(2)}</td></tr>
             `;
 
             const renderSummary = (containerId, key) => {
@@ -578,5 +578,6 @@
     </script>
 </body>
 </html>
+
 
 
