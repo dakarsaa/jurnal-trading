@@ -3,29 +3,457 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dasbor Jurnal Trading Forex - Final</title>
+    <title>Dasbor Jurnal Trading Forex - Enhanced</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; padding: 2rem; }
-        .container { background-color: #ffffff; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 1200px; margin: auto; }
-        .table-wrapper { max-height: 450px; overflow: auto; margin-bottom: 2rem; border: 1px solid #e5e7eb; border-radius: 0.5rem; }
-        table { width: 100%; border-collapse: separate; border-spacing: 0; }
-        th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #e5e7eb; white-space: nowrap; }
-        th { background-color: #f9fafb; font-weight: 600; color: #374151; position: sticky; top: 0; z-index: 10; }
-        .profit { color: #10b981; font-weight: 600; }
-        .loss { color: #ef4444; font-weight: 600; }
-        .chart-container { width: 100%; height: 400px; margin-bottom: 2rem; }
-        .stats-container { background-color: #ffffff; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2rem; }
-        .btn { padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
-        .btn-primary { background-color: #2563eb; color: white; }
-        .btn-secondary { background-color: #6b7280; color: white; }
-        .btn-edit, .btn-delete { padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; color: white; }
-        .btn-edit { background-color: #f59e0b; }
-        .btn-delete { background-color: #ef4444; }
-        #syncStatus { font-size: 0.8rem; color: #6b7280; text-align: center; margin-top: -1rem; margin-bottom: 1rem; }
-        .summary-item { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px dashed #e5e7eb; }
-        .summary-item:last-child { border-bottom: none; }
+        /* ===== DESIGN SYSTEM ===== */
+        :root {
+            /* Colors - Consistent palette */
+            --color-primary: #2563eb;
+            --color-primary-light: #3b82f6;
+            --color-primary-bg: #eff6ff;
+            
+            --color-success: #10b981;
+            --color-success-light: #34d399;
+            --color-success-bg: #d1fae5;
+            
+            --color-danger: #ef4444;
+            --color-danger-light: #f87171;
+            --color-danger-bg: #fee2e2;
+            
+            --color-warning: #f59e0b;
+            --color-warning-light: #fbbf24;
+            --color-warning-bg: #fef3c7;
+            
+            --color-gray-50: #f9fafb;
+            --color-gray-100: #f3f4f6;
+            --color-gray-200: #e5e7eb;
+            --color-gray-300: #d1d5db;
+            --color-gray-400: #9ca3af;
+            --color-gray-500: #6b7280;
+            --color-gray-600: #4b5563;
+            --color-gray-700: #374151;
+            --color-gray-800: #1f2937;
+            --color-gray-900: #111827;
+            
+            /* Typography */
+            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-size-xs: 0.75rem;
+            --font-size-sm: 0.875rem;
+            --font-size-base: 1rem;
+            --font-size-lg: 1.125rem;
+            --font-size-xl: 1.25rem;
+            --font-size-2xl: 1.5rem;
+            --font-size-3xl: 1.875rem;
+            
+            --font-weight-normal: 400;
+            --font-weight-medium: 500;
+            --font-weight-semibold: 600;
+            --font-weight-bold: 700;
+            
+            /* Spacing */
+            --spacing-1: 0.25rem;
+            --spacing-2: 0.5rem;
+            --spacing-3: 0.75rem;
+            --spacing-4: 1rem;
+            --spacing-5: 1.25rem;
+            --spacing-6: 1.5rem;
+            --spacing-8: 2rem;
+            
+            /* Border radius */
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            
+            /* Shadows */
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        /* ===== BASE STYLES ===== */
+        * {
+            font-family: var(--font-family);
+        }
+
+        body {
+            background-color: var(--color-gray-100);
+            padding: var(--spacing-8);
+            font-size: var(--font-size-base);
+            color: var(--color-gray-800);
+            line-height: 1.5;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            color: var(--color-gray-800);
+            font-weight: var(--font-weight-bold);
+            margin: 0;
+        }
+
+        h1 { font-size: var(--font-size-3xl); }
+        h2 { font-size: var(--font-size-2xl); }
+        h3 { font-size: var(--font-size-xl); }
+        h4 { font-size: var(--font-size-lg); }
+
+        /* ===== LAYOUT ===== */
+        .container {
+            background-color: white;
+            padding: var(--spacing-6);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        /* ===== TABLES ===== */
+        .table-wrapper {
+            max-height: 450px;
+            overflow: auto;
+            margin-bottom: var(--spacing-8);
+            border: 1px solid var(--color-gray-200);
+            border-radius: var(--radius-md);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: var(--font-size-sm);
+        }
+
+        th, td {
+            padding: var(--spacing-3);
+            text-align: left;
+            border-bottom: 1px solid var(--color-gray-200);
+            white-space: nowrap;
+            color: var(--color-gray-700);
+        }
+
+        th {
+            background-color: var(--color-gray-50);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-gray-700);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            font-size: var(--font-size-xs);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn {
+            padding: var(--spacing-3) var(--spacing-6);
+            border-radius: var(--radius-md);
+            font-weight: var(--font-weight-semibold);
+            font-size: var(--font-size-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background-color: var(--color-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--color-primary-light);
+        }
+
+        .btn-secondary {
+            background-color: var(--color-gray-500);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--color-gray-600);
+        }
+
+        .btn-edit, .btn-delete {
+            padding: var(--spacing-1) var(--spacing-2);
+            border-radius: var(--radius-sm);
+            font-size: var(--font-size-xs);
+            color: white;
+            font-weight: var(--font-weight-medium);
+        }
+
+        .btn-edit {
+            background-color: var(--color-warning);
+        }
+
+        .btn-edit:hover {
+            background-color: var(--color-warning-light);
+        }
+
+        .btn-delete {
+            background-color: var(--color-danger);
+        }
+
+        .btn-delete:hover {
+            background-color: var(--color-danger-light);
+        }
+
+        /* ===== FORMS ===== */
+        input, select, textarea {
+            font-family: var(--font-family);
+            font-size: var(--font-size-sm);
+            color: var(--color-gray-700);
+            border: 1px solid var(--color-gray-300);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-2);
+            transition: border-color 0.2s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px var(--color-primary-bg);
+        }
+
+        label {
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-medium);
+            color: var(--color-gray-700);
+            margin-bottom: var(--spacing-1);
+            display: block;
+        }
+
+        /* ===== STATUS COLORS ===== */
+        .profit {
+            color: var(--color-success);
+            font-weight: var(--font-weight-semibold);
+        }
+
+        .loss {
+            color: var(--color-danger);
+            font-weight: var(--font-weight-semibold);
+        }
+
+        .withdraw-amount {
+            color: var(--color-danger);
+            font-weight: var(--font-weight-semibold);
+        }
+
+        /* ===== STATS CONTAINERS ===== */
+        .stats-container {
+            background-color: white;
+            padding: var(--spacing-6);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            margin-top: var(--spacing-8);
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 400px;
+            margin-bottom: var(--spacing-8);
+        }
+
+        /* ===== TABS ===== */
+        .tab-container {
+            border-bottom: 2px solid var(--color-gray-200);
+            margin-bottom: var(--spacing-8);
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 0;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .tab-button {
+            padding: var(--spacing-4) var(--spacing-6);
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-gray-500);
+            transition: all 0.3s ease;
+            font-size: var(--font-size-sm);
+            font-family: var(--font-family);
+            white-space: nowrap;
+            min-width: fit-content;
+        }
+
+        .tab-button:hover {
+            color: var(--color-gray-700);
+            background-color: var(--color-gray-50);
+        }
+
+        .tab-button.active {
+            color: var(--color-primary);
+            border-bottom-color: var(--color-primary);
+            background-color: var(--color-primary-bg);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* ===== SPECIFIC COMPONENTS ===== */
+        #syncStatus {
+            font-size: var(--font-size-sm);
+            color: var(--color-gray-500);
+            text-align: center;
+            margin-top: calc(var(--spacing-4) * -1);
+            margin-bottom: var(--spacing-4);
+        }
+
+        .balance-info {
+            background: linear-gradient(135deg, var(--color-gray-50) 0%, var(--color-gray-100) 100%);
+            border-left: 4px solid var(--color-primary);
+        }
+
+        .alert {
+            padding: var(--spacing-4);
+            margin: var(--spacing-4) 0;
+            border-radius: var(--radius-md);
+            background-color: var(--color-warning-bg);
+            border: 1px solid var(--color-warning);
+            color: var(--color-warning);
+            font-size: var(--font-size-sm);
+        }
+
+        /* ===== LINKS ===== */
+        a {
+            color: var(--color-primary);
+            text-decoration: underline;
+            transition: all 0.2s ease;
+        }
+
+        a:hover {
+            color: var(--color-primary-light);
+            text-decoration: none;
+        }
+
+        .loss-details-btn {
+            color: var(--color-danger);
+            font-weight: var(--font-weight-semibold);
+            text-decoration: underline;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .loss-details-btn:hover {
+            color: var(--color-danger-light);
+            transform: scale(1.05);
+        }
+
+        /* ===== MODALS ===== */
+        #lossModal {
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* ===== TOOLTIPS ===== */
+        .donut-tooltip {
+            box-shadow: var(--shadow-lg);
+            backdrop-filter: blur(4px);
+            font-family: var(--font-family);
+            font-size: var(--font-size-xs);
+        }
+
+        /* ===== TABLE SPECIFIC ===== */
+        .table-wrapper table th:last-child,
+        .table-wrapper table td:last-child {
+            max-width: 200px;
+            word-wrap: break-word;
+            white-space: normal;
+        }
+
+        /* Performance table specific styling */
+        .performance-table td {
+            vertical-align: top;
+            padding: 8px 4px;
+        }
+
+        .loss-pairs-cell {
+            max-height: 60px;
+            overflow-y: auto;
+            line-height: 1.4;
+        }
+
+        .loss-pair {
+            display: inline-block;
+            margin: 1px 2px;
+            padding: 1px 4px;
+            background-color: #fee2e2;
+            border-radius: 3px;
+            font-size: 11px;
+            white-space: nowrap;
+        }
+
+        /* ===== PERFORMANCE CHART STYLES ===== */
+        .performance-chart-container {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-6);
+            box-shadow: var(--shadow-md);
+            margin-bottom: var(--spacing-6);
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            body {
+                padding: var(--spacing-4);
+            }
+            
+            .container {
+                padding: var(--spacing-4);
+            }
+            
+            h1 {
+                font-size: var(--font-size-2xl);
+            }
+            
+            .table-wrapper table th:last-child,
+            .table-wrapper table td:last-child {
+                max-width: 150px;
+                font-size: var(--font-size-xs);
+            }
+            
+            .tab-button {
+                padding: var(--spacing-3) var(--spacing-4);
+                font-size: var(--font-size-xs);
+            }
+        }
+
+        /* ===== CHART STYLES ===== */
+        .arc text {
+            pointer-events: none;
+            user-select: none;
+            font-family: var(--font-family);
+        }
+
+        .center-text {
+            pointer-events: none;
+        }
+
+        .arc polyline {
+            pointer-events: none;
+        }
+
+        .arc path {
+            filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+        }
+
+        .arc:hover path {
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+        }
     </style>
 </head>
 <body>
@@ -35,79 +463,511 @@
         
         <div id="dashboardContent">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 text-center">
-                <div class="bg-gray-100 p-4 rounded-lg shadow-sm"><h3 class="text-sm font-medium text-gray-500 uppercase">Current Balance</h3><p id="currentBalanceValue" class="text-2xl font-bold text-gray-800 mt-1">$0.00</p></div>
-                <div class="bg-gray-100 p-4 rounded-lg shadow-sm"><h3 class="text-sm font-medium text-gray-500 uppercase">Total P/L</h3><p id="totalPlValue" class="text-2xl font-bold mt-1">$0.00</p></div>
-                <div class="bg-gray-100 p-4 rounded-lg shadow-sm"><h3 class="text-sm font-medium text-gray-500 uppercase">P/L %</h3><p id="plPercentageValue" class="text-2xl font-bold mt-1">0.00%</p></div>
-            </div>
-            <div style="display: flex; justify-content: center; margin-bottom: 1.5rem;">
-    <label for="initialBalance" class="font-bold mr-2 self-center">Initial Balance (USD):</label>
-    <input type="number" id="initialBalance" value="1000" min="0" step="100" class="p-2 border rounded">
-    <label class="ml-4 self-center">
-        <input type="checkbox" id="toggleInitialBalance" class="mr-1">
-        Hide
-    </label>
-    </div>
-            <h2 class="text-2xl font-bold mb-4 text-gray-800 text-center">Trading Management</h2>
-            <form id="tradeForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-lg shadow-sm mb-6">
-                <div><label for="date">Date & Time:</label><input type="datetime-local" id="date" class="w-full p-2 border rounded"></div>
-                <div><label for="pair">Pair:</label><input type="text" id="pair" placeholder="EUR/USD" class="w-full p-2 border rounded"></div>
-                <div><label for="lotSize">Lot:</label><input type="number" id="lotSize" step="0.01" min="0.01" class="w-full p-2 border rounded"></div>
-                <div><label for="position">Position:</label><select id="position" class="w-full p-2 border rounded"><option value="Buy">Buy</option><option value="Sell">Sell</option></select></div>
-                <div><label for="entryPrice">Entry Price:</label><input type="number" id="entryPrice" step="0.00001" class="w-full p-2 border rounded"></div>
-                <div><label for="exitPrice">Exit Price:</label><input type="number" id="exitPrice" step="0.00001" class="w-full p-2 border rounded"></div>
-                <div><label for="stopLoss">Stop Loss:</label><input type="number" id="stopLoss" step="0.00001" class="w-full p-2 border rounded"></div>
-                <div><label for="takeProfit">Take Profit:</label><input type="number" id="takeProfit" step="0.00001" class="w-full p-2 border rounded"></div>
-                <div><label for="timeframe">Timeframe:</label><select id="timeframe" class="w-full p-2 border rounded"><option>M15</option><option>M30</option><option>H1</option><option>H4</option><option>D1</option></select></div>
-                <div><label for="reason">Strategy:</label><input type="text" id="reason" class="w-full p-2 border rounded"></div>
-                <div><label for="emotion">Emotion:</label><select id="emotion" class="w-full p-2 border rounded"><option>Yakin</option><option>Cemas</option><option>Tenang</option><option>Optimis</option></select></div>
-                <div><label for="lessons">Remarks:</label><input type="text" id="lessons" class="w-full p-2 border rounded"></div>
-                <div class="col-span-full flex gap-4 mt-4">
-                    <button type="submit" id="addOrUpdateTradeBtn" class="btn btn-primary">Add Trading</button>
-                    <button type="button" id="cancelEditBtn" class="btn btn-secondary" style="display:none;">Cancel</button>
+                <div class="bg-gray-100 p-4 rounded-lg shadow-sm">
+                    <h3 class="text-sm font-medium text-gray-500 uppercase">Current Balance</h3>
+                    <p id="currentBalanceValue" class="text-2xl font-bold text-gray-800 mt-1">$0.00</p>
                 </div>
-            </form>
-            <h2 class="text-2xl font-bold my-6 text-gray-800 text-center">Trading History</h2>
-            <div class="table-wrapper"><table id="tradingTable"><thead><tr><th>Action</th><th>Date</th><th>Pair</th><th>Position</th><th>P/L (USD)</th><th>Pips</th><th>Lot</th><th>R:R</th><th>Strategy</th></tr></thead><tbody></tbody></table></div>
-            <h2 class="text-2xl font-bold mb-4 text-gray-800 text-center">Balance (USD)</h2>
-            <div class="chart-container"><svg id="equityChartUsd"></svg></div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-                <div class="stats-container"><h2 class="text-2xl font-bold mb-4 text-center">Strategy Analysis</h2><div id="strategySummary"></div></div>
-                <div class="stats-container"><h2 class="text-2xl font-bold mb-4 text-center">Timeframe Analysis</h2><div id="timeframeSummary"></div></div>
+                <div class="bg-gray-100 p-4 rounded-lg shadow-sm">
+                    <h3 class="text-sm font-medium text-gray-500 uppercase">Total P/L</h3>
+                    <p id="totalPlValue" class="text-2xl font-bold mt-1">$0.00</p>
+                </div>
+                <div class="bg-gray-100 p-4 rounded-lg shadow-sm">
+                    <h3 class="text-sm font-medium text-gray-500 uppercase">P/L %</h3>
+                    <p id="plPercentageValue" class="text-2xl font-bold mt-1">0.00%</p>
+                </div>
             </div>
-            <div class="stats-container"><h2 class="text-2xl font-bold mb-4 text-center">Trading Performance</h2><table class="w-full"><tbody id="statisticsBody" class="divide-y"></tbody></table></div>
-            <div class="stats-container">
-                <h2 class="text-2xl font-bold mb-4 text-gray-800 text-center">Periodical Performance</h2>
-                <h3 class="text-xl font-semibold mb-2 text-center">Weekly</h3>
-                <div class="table-wrapper" style="max-height: 200px; border: none;"><table id="weeklyPerformanceTable" class="w-full"><thead><tr><th>Week</th><th>Trades</th><th>Win Rate</th><th>Profit (USD)</th></tr></thead><tbody></tbody></table></div>
-                <h3 class="text-xl font-semibold my-4 text-center">Monthly</h3>
-                <div class="table-wrapper" style="max-height: 200px; border: none;"><table id="monthlyPerformanceTable" class="w-full"><thead><tr><th>Month</th><th>Trades</th><th>Win Rate</th><th>Profit (USD)</th></tr></thead><tbody></tbody></table></div>
+            
+            <div style="display: flex; justify-content: center; margin-bottom: 1.5rem;">
+                <label for="initialBalance" class="font-bold mr-2 self-center">Initial Balance (USD):</label>
+                <input type="number" id="initialBalance" value="1000" min="0" step="100" class="p-2 border rounded">
+                <label class="ml-4 self-center">
+                    <input type="checkbox" id="toggleInitialBalance" class="mr-1">
+                    Hide Balance
+                </label>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="tab-container">
+                <div class="tab-buttons">
+                    <button class="tab-button active" data-tab="trading">
+                        <span class="mr-2">📈</span>Trading Management
+                    </button>
+                    <button class="tab-button" data-tab="withdraw">
+                        <span class="mr-2">💰</span>Withdraw Management
+                    </button>
+                    <button class="tab-button" data-tab="analysis">
+                        <span class="mr-2">📊</span>Strategy & Timeframe Analysis
+                    </button>
+                    <button class="tab-button" data-tab="performance">
+                        <span class="mr-2">📅</span>Performance Analysis
+                    </button>
+                    <button class="tab-button" data-tab="overview">
+                        <span class="mr-2">🎯</span>Overview & Charts
+                    </button>
+                </div>
+            </div>
+
+            <!-- Trading Management Tab -->
+            <div id="trading-tab" class="tab-content active">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800 text-center">Trading Management</h2>
+                <form id="tradeForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-lg shadow-sm mb-6">
+                    <div><label for="date">Tanggal & Waktu:</label><input type="datetime-local" id="date" class="w-full p-2 border rounded"></div>
+                    <div>
+                        <label for="pair">Pair:</label>
+                        <select id="pair" class="w-full p-2 border rounded">
+                            <optgroup label="Major Pairs">
+                                <option value="EURUSD">EUR/USD</option>
+                                <option value="GBPUSD">GBP/USD</option>
+                                <option value="USDJPY">USD/JPY</option>
+                                <option value="USDCHF">USD/CHF</option>
+                                <option value="AUDUSD">AUD/USD</option>
+                                <option value="USDCAD">USD/CAD</option>
+                                <option value="NZDUSD">NZD/USD</option>
+                            </optgroup>
+                            <optgroup label="Minor Pairs">
+                                <option value="EURGBP">EUR/GBP</option>
+                                <option value="EURJPY">EUR/JPY</option>
+                                <option value="GBPJPY">GBP/JPY</option>
+                                <option value="CHFJPY">CHF/JPY</option>
+                                <option value="EURCHF">EUR/CHF</option>
+                                <option value="AUDCAD">AUD/CAD</option>
+                                <option value="AUDCHF">AUD/CHF</option>
+                                <option value="AUDJPY">AUD/JPY</option>
+                                <option value="CADJPY">CAD/JPY</option>
+                                <option value="EURAUD">EUR/AUD</option>
+                                <option value="EURCAD">EUR/CAD</option>
+                                <option value="GBPAUD">GBP/AUD</option>
+                                <option value="GBPCAD">GBP/CAD</option>
+                                <option value="GBPCHF">GBP/CHF</option>
+                                <option value="NZDCAD">NZD/CAD</option>
+                                <option value="NZDCHF">NZD/CHF</option>
+                                <option value="NZDJPY">NZD/JPY</option>
+                            </optgroup>
+                            <optgroup label="Commodities">
+                                <option value="XAUUSD">XAU/USD (Gold)</option>
+                                <option value="XAGUSD">XAG/USD (Silver)</option>
+                            </optgroup>
+                            <optgroup label="Custom">
+                                <option value="custom">Custom Pair...</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div id="customPairDiv" style="display:none;">
+                        <label for="customPair">Custom Pair:</label>
+                        <input type="text" id="customPair" placeholder="EUR/USD" class="w-full p-2 border rounded">
+                    </div>
+                    <div><label for="lotSize">Lot:</label><input type="number" id="lotSize" step="0.01" min="0.01" class="w-full p-2 border rounded"></div>
+                    <div><label for="position">Position:</label><select id="position" class="w-full p-2 border rounded"><option value="Buy">Buy</option><option value="Sell">Sell</option></select></div>
+                    <div><label for="entryPrice">Entry Price:</label><input type="number" id="entryPrice" step="0.00001" class="w-full p-2 border rounded"></div>
+                    <div><label for="exitPrice">Exit Price:</label><input type="number" id="exitPrice" step="0.00001" class="w-full p-2 border rounded"></div>
+                    <div><label for="stopLoss">Stop Loss:</label><input type="number" id="stopLoss" step="0.00001" class="w-full p-2 border rounded"></div>
+                    <div><label for="takeProfit">Take Profit:</label><input type="number" id="takeProfit" step="0.00001" class="w-full p-2 border rounded"></div>
+                    <div><label for="timeframe">Timeframe:</label><select id="timeframe" class="w-full p-2 border rounded"><option>M15</option><option>M30</option><option>H1</option><option>H4</option><option>D1</option></select></div>
+                    <div><label for="reason">Strategy:</label><input type="text" id="reason" class="w-full p-2 border rounded"></div>
+                    <div><label for="emotion">Emotion:</label><select id="emotion" class="w-full p-2 border rounded"><option>Yakin</option><option>Cemas</option><option>Tenang</option><option>Optimis</option></select></div>
+                    <div><label for="lessons">Remarks:</label><input type="text" id="lessons" class="w-full p-2 border rounded"></div>
+                    <div class="col-span-full flex gap-4 mt-4">
+                        <button type="submit" id="addOrUpdateTradeBtn" class="btn btn-primary">Add Trading</button>
+                        <button type="button" id="cancelEditBtn" class="btn btn-secondary" style="display:none;">Batal</button>
+                    </div>
+                </form>
+                
+                <h2 class="text-2xl font-bold my-6 text-gray-800 text-center">Trading History</h2>
+                <div class="table-wrapper">
+                    <table id="tradingTable">
+                        <thead>
+                            <tr>
+                                <th>Aksi</th>
+                                <th>Tanggal</th>
+                                <th>Pair</th>
+                                <th>Posisi</th>
+                                <th>P/L (USD)</th>
+                                <th>Pips</th>
+                                <th>Lot</th>
+                                <th>R:R</th>
+                                <th>Strategi</th>
+                                <th>Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Withdraw Management Tab -->
+            <div id="withdraw-tab" class="tab-content">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800 text-center">Withdraw Management</h2>
+                
+                <!-- Current Balance Info -->
+                <div class="balance-info p-4 rounded-lg mb-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800">Available Balance</h3>
+                            <p class="text-sm text-gray-600">Current trading account balance</p>
+                        </div>
+                        <div class="text-right">
+                            <p id="availableBalance" class="text-2xl font-bold text-green-600">$0.00</p>
+                            <p class="text-xs text-gray-500">Updated real-time</p>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="withdrawForm" class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg shadow-sm mb-6">
+                    <div>
+                        <label for="withdrawDate">Tanggal Withdraw:</label>
+                        <input type="datetime-local" id="withdrawDate" class="w-full p-2 border rounded" required>
+                    </div>
+                    <div>
+                        <label for="withdrawAmount">Amount (USD):</label>
+                        <input type="number" id="withdrawAmount" step="0.01" min="0.01" class="w-full p-2 border rounded" required>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="withdrawNotes">Notes:</label>
+                        <input type="text" id="withdrawNotes" placeholder="Withdraw reason, destination, etc." class="w-full p-2 border rounded">
+                    </div>
+                    <div class="md:col-span-2">
+                        <div class="bg-yellow-50 border border-yellow-200 rounded p-3 mb-4">
+                            <p class="text-sm text-yellow-800">
+                                <span class="font-semibold">⚠️ Balance After Withdraw:</span> 
+                                <span id="balanceAfterWithdraw" class="font-bold">$0.00</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="md:col-span-2 flex gap-4">
+                        <button type="submit" id="addOrUpdateWithdrawBtn" class="btn btn-primary">Add Withdraw</button>
+                        <button type="button" id="cancelWithdrawEditBtn" class="btn btn-secondary" style="display:none;">Cancel</button>
+                    </div>
+                </form>
+
+                <h2 class="text-2xl font-bold my-6 text-gray-800 text-center">Withdraw History</h2>
+                <div class="table-wrapper">
+                    <table id="withdrawTable">
+                        <thead>
+                            <tr>
+                                <th>Aksi</th>
+                                <th>Tanggal</th>
+                                <th>Amount (USD)</th>
+                                <th>Balance After</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <!-- Withdraw Summary Stats -->
+                <div class="stats-container">
+                    <h2 class="text-2xl font-bold mb-4 text-gray-800 text-center">Withdraw Summary</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-red-50 p-4 rounded-lg text-center">
+                            <h3 class="text-sm font-medium text-red-600 uppercase">Total Withdrawn</h3>
+                            <p id="totalWithdrawn" class="text-2xl font-bold text-red-600 mt-1">$0.00</p>
+                        </div>
+                        <div class="bg-blue-50 p-4 rounded-lg text-center">
+                            <h3 class="text-sm font-medium text-blue-600 uppercase">Withdraw Count</h3>
+                            <p id="withdrawCount" class="text-2xl font-bold text-blue-600 mt-1">0</p>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-lg text-center">
+                            <h3 class="text-sm font-medium text-green-600 uppercase">Average Withdraw</h3>
+                            <p id="averageWithdraw" class="text-2xl font-bold text-green-600 mt-1">$0.00</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Strategy & Timeframe Analysis Tab -->
+            <div id="analysis-tab" class="tab-content">
+                <h2 class="text-2xl font-bold mb-6 text-gray-800 text-center">Strategy & Timeframe Analysis</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="stats-container">
+                        <h3 class="text-xl font-bold mb-4 text-center text-gray-800">Strategy Performance</h3>
+                        <div id="strategyAnalysisTable"></div>
+                    </div>
+                    <div class="stats-container">
+                        <h3 class="text-xl font-bold mb-4 text-center text-gray-800">Timeframe Performance</h3>
+                        <div id="timeframeAnalysisTable"></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8" id="pairAnalysisContainer">
+                    <div class="stats-container text-center">
+                        <div id="mostTradedChart"></div>
+                        <div id="mostTradedSummary"></div>
+                    </div>
+                    <div class="stats-container text-center">
+                        <div id="mostProfitableChart"></div>
+                        <div id="mostProfitableSummary"></div>
+                    </div>
+                    <div class="stats-container text-center">
+                        <div id="mostLosingChart"></div>
+                        <div id="mostLosingSummary"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Analysis Tab -->
+            <div id="performance-tab" class="tab-content">
+                <h2 class="text-2xl font-bold mb-6 text-gray-800 text-center">Performance Analysis</h2>
+                
+                <!-- Weekly Performance -->
+                <div class="performance-chart-container">
+                    <h3 class="text-xl font-semibold mb-4 text-center text-gray-800">Weekly Performance</h3>
+                    <div class="table-wrapper" style="max-height: 300px; border: none;">
+                        <table id="weeklyPerformanceTable" class="w-full table-fixed">
+                            <thead>
+                                <tr>
+                                    <th class="w-1/6 text-center">Week</th>
+                                    <th class="w-1/6 text-center">Trades</th>
+                                    <th class="w-1/6 text-center">Win Rate</th>
+                                    <th class="w-1/6 text-center">Profit (USD)</th>
+                                    <th class="w-1/6 text-center">Profit %</th>
+                                    <th class="w-1/6 text-center">Loss Pairs</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Monthly Performance -->
+                <div class="performance-chart-container">
+                    <h3 class="text-xl font-semibold mb-4 text-center text-gray-800">Monthly Performance</h3>
+                    <div class="table-wrapper" style="max-height: 300px; border: none;">
+                        <table id="monthlyPerformanceTable" class="w-full table-fixed">
+                            <thead>
+                                <tr>
+                                    <th class="w-1/6 text-center">Month</th>
+                                    <th class="w-1/6 text-center">Trades</th>
+                                    <th class="w-1/6 text-center">Win Rate</th>
+                                    <th class="w-1/6 text-center">Profit (USD)</th>
+                                    <th class="w-1/6 text-center">Profit %</th>
+                                    <th class="w-1/6 text-center">Loss Pairs</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Monthly Performance Chart -->
+                <div class="performance-chart-container">
+                    <h3 class="text-xl font-semibold mb-4 text-center text-gray-800">Monthly Profit Percentage Chart</h3>
+                    <div class="chart-container">
+                        <svg id="monthlyProfitChart"></svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Overview & Charts Tab -->
+            <div id="overview-tab" class="tab-content">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800 text-center">Overview & Charts</h2>
+                
+                <!-- Equity Chart -->
+                <h3 class="text-xl font-bold mb-4 text-gray-800 text-center">Equity (USD)</h3>
+                <div class="chart-container"><svg id="equityChartUsd"></svg></div>
+                
+                <!-- Trading Performance Statistics -->
+                <div class="stats-container">
+                    <h3 class="text-xl font-bold mb-4 text-center text-gray-800">Trading Performance Statistics</h3>
+                    <table class="w-full">
+                        <tbody id="statisticsBody" class="divide-y"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Enhanced Forex Calculation Engine
+        const ForexCalculator = {
+            // Comprehensive pip value configurations
+            pipValues: {
+                // Major pairs (USD account)
+                'EURUSD': { pipPosition: 4, pipValue: 10 },
+                'GBPUSD': { pipPosition: 4, pipValue: 10 },
+                'AUDUSD': { pipPosition: 4, pipValue: 10 },
+                'NZDUSD': { pipPosition: 4, pipValue: 10 },
+                'USDCHF': { pipPosition: 4, pipValue: 10 },
+                'USDCAD': { pipPosition: 4, pipValue: 10 },
+                'USDJPY': { pipPosition: 2, pipValue: 9.09 }, // Approximate for JPY pairs
+                
+                // Cross pairs with JPY
+                'EURJPY': { pipPosition: 2, pipValue: 9.09 },
+                'GBPJPY': { pipPosition: 2, pipValue: 9.09 },
+                'AUDJPY': { pipPosition: 2, pipValue: 9.09 },
+                'NZDJPY': { pipPosition: 2, pipValue: 9.09 },
+                'CADJPY': { pipPosition: 2, pipValue: 9.09 },
+                'CHFJPY': { pipPosition: 2, pipValue: 9.09 },
+                
+                // EUR crosses
+                'EURGBP': { pipPosition: 4, pipValue: 12.5 }, // Approximate
+                'EURCHF': { pipPosition: 4, pipValue: 10 },
+                'EURAUD': { pipPosition: 4, pipValue: 7.5 },
+                'EURCAD': { pipPosition: 4, pipValue: 7.5 },
+                
+                // GBP crosses
+                'GBPCHF': { pipPosition: 4, pipValue: 10 },
+                'GBPAUD': { pipPosition: 4, pipValue: 7.5 },
+                'GBPCAD': { pipPosition: 4, pipValue: 7.5 },
+                
+                // AUD/NZD crosses
+                'AUDCAD': { pipPosition: 4, pipValue: 7.5 },
+                'AUDCHF': { pipPosition: 4, pipValue: 10 },
+                'NZDCAD': { pipPosition: 4, pipValue: 7.5 },
+                'NZDCHF': { pipPosition: 4, pipValue: 10 },
+                
+                // Exotic pairs (approximate values)
+                'USDSEK': { pipPosition: 4, pipValue: 1.1 },
+                'USDNOK': { pipPosition: 4, pipValue: 1.1 },
+                'USDDKK': { pipPosition: 4, pipValue: 1.5 },
+                'USDPLN': { pipPosition: 4, pipValue: 2.6 },
+                'USDHUF': { pipPosition: 2, pipValue: 0.03 },
+                'USDCZK': { pipPosition: 4, pipValue: 0.45 },
+                'USDTRY': { pipPosition: 4, pipValue: 1.8 },
+                'USDZAR': { pipPosition: 4, pipValue: 0.7 },
+                'USDMXN': { pipPosition: 4, pipValue: 0.5 },
+                'USDSGD': { pipPosition: 4, pipValue: 7.4 },
+                'USDHKD': { pipPosition: 4, pipValue: 1.3 },
+                
+                // Commodities
+                'XAUUSD': { pipPosition: 1, pipValue: 10 }, // Gold: $10 per pip for 1 oz
+                'XAGUSD': { pipPosition: 2, pipValue: 50 }  // Silver: $50 per pip for 1 oz
+            },
+
+            // Calculate pips based on pair type
+            calculatePips: function(pair, position, entryPrice, exitPrice) {
+                if (!pair || !position || typeof entryPrice !== 'number' || typeof exitPrice !== 'number') {
+                    return 0;
+                }
+                
+                const pairKey = pair.replace('/', '').toUpperCase();
+                const config = this.pipValues[pairKey] || this.getDefaultConfig(pair);
+                
+                const multiplier = Math.pow(10, config.pipPosition);
+                const priceDiff = position === 'Buy' ? (exitPrice - entryPrice) : (entryPrice - exitPrice);
+                
+                return parseFloat((priceDiff * multiplier).toFixed(1));
+            },
+
+            // Calculate profit in USD
+            calculateProfitInUsd: function(pair, pips, lotSize) {
+                if (!pair || typeof pips !== 'number' || typeof lotSize !== 'number') {
+                    return 0;
+                }
+                
+                const pairKey = pair.replace('/', '').toUpperCase();
+                const config = this.pipValues[pairKey] || this.getDefaultConfig(pair);
+                
+                // Special handling for commodities
+                if (pairKey === 'XAUUSD') {
+                    // Gold: 1 lot = 100 oz, 1 pip = $1 per oz
+                    return pips * lotSize * 10;
+                } else if (pairKey === 'XAGUSD') {
+                    // Silver: 1 lot = 5000 oz, 1 pip = $0.01 per oz  
+                    return pips * lotSize * 50;
+                }
+                
+                // Standard forex calculation
+                return pips * lotSize * config.pipValue;
+            },
+
+            // Get default configuration for unknown pairs
+            getDefaultConfig: function(pair) {
+                const pairUpper = pair.toUpperCase().replace('/', '');
+                
+                // Default logic based on pair pattern
+                if (pairUpper.includes('JPY')) {
+                    return { pipPosition: 2, pipValue: 9.09 };
+                } else if (pairUpper.startsWith('XAU')) {
+                    return { pipPosition: 1, pipValue: 10 };
+                } else if (pairUpper.startsWith('XAG')) {
+                    return { pipPosition: 2, pipValue: 50 };
+                } else {
+                    return { pipPosition: 4, pipValue: 10 };
+                }
+            }
+        };
+
+        // Tab Management
+        const TabManager = {
+            init: function() {
+                const tabButtons = document.querySelectorAll('.tab-button');
+                const tabContents = document.querySelectorAll('.tab-content');
+
+                tabButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        const targetTab = button.dataset.tab;
+                        
+                        // Remove active class from all buttons and contents
+                        tabButtons.forEach(btn => btn.classList.remove('active'));
+                        tabContents.forEach(content => content.classList.remove('active'));
+                        
+                        // Add active class to clicked button and corresponding content
+                        button.classList.add('active');
+                        document.getElementById(`${targetTab}-tab`).classList.add('active');
+                        
+                        // Update content based on active tab
+                        if (targetTab === 'withdraw') {
+                            updateAvailableBalance();
+                            updateBalanceAfterWithdraw();
+                        } else if (targetTab === 'analysis') {
+                            renderAnalysisTab();
+                        } else if (targetTab === 'performance') {
+                            renderPerformanceTab();
+                        } else if (targetTab === 'overview') {
+                            drawEquityChart();
+                        }
+                    });
+                });
+            }
+        };
+
+        // UI Elements
         document.getElementById('toggleInitialBalance').addEventListener('change', function() {
-    const input = document.getElementById('initialBalance');
-    input.style.display = this.checked ? 'none' : 'inline-block';
-    });
+            const input = document.getElementById('initialBalance');
+            input.style.display = this.checked ? 'none' : 'inline-block';
+        });
+
+        // Handle custom pair selection
+        document.getElementById('pair').addEventListener('change', function() {
+            const customDiv = document.getElementById('customPairDiv');
+            if (this.value === 'custom') {
+                customDiv.style.display = 'block';
+            } else {
+                customDiv.style.display = 'none';
+            }
+        });
+
+        // Withdraw amount input handler
+        document.getElementById('withdrawAmount').addEventListener('input', updateBalanceAfterWithdraw);
+
         // ==================================================================
-        // === KONFIGURASI WAJIB: GANTI DENGAN KUNCI RAHASIA ANDA ===
+        // === AIRTABLE CONFIGURATION ===
         // ==================================================================
         const AIRTABLE_API_KEY = "patgVfG7UrVD0cru3.f8411907bca108083167b58676e91078452dd530958923555bb0895e15d38457";
         const AIRTABLE_BASE_ID = "app0SlHtg1Nnb0H9B";
-        const AIRTABLE_TABLE_NAME = "Trades";
-        // ==================================================================
+        const AIRTABLE_TRADES_TABLE = "Trades";
+        const AIRTABLE_WITHDRAWS_TABLE = "Withdraws";
 
-        const airtableUrl = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE_NAME)}`;
+        const tradesUrl = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TRADES_TABLE)}`;
+        const withdrawsUrl = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_WITHDRAWS_TABLE)}`;
+        
         let tradingData = [];
+        let withdrawData = [];
         let recordBeingEditedId = null;
+        let withdrawBeingEditedId = null;
 
         const ui = {
             tradeForm: document.getElementById('tradeForm'),
+            withdrawForm: document.getElementById('withdrawForm'),
             addOrUpdateTradeBtn: document.getElementById('addOrUpdateTradeBtn'),
+            addOrUpdateWithdrawBtn: document.getElementById('addOrUpdateWithdrawBtn'),
             cancelEditBtn: document.getElementById('cancelEditBtn'),
+            cancelWithdrawEditBtn: document.getElementById('cancelWithdrawEditBtn'),
             tableBody: document.querySelector('#tradingTable tbody'),
+            withdrawTableBody: document.querySelector('#withdrawTable tbody'),
             initialBalanceInput: document.getElementById('initialBalance'),
             syncStatus: document.getElementById('syncStatus')
         };
@@ -115,22 +975,38 @@
         const apiHeaders = { 'Authorization': `Bearer ${AIRTABLE_API_KEY}`, 'Content-Type': 'application/json' };
 
         // --- CACHING LOGIC ---
-        function saveToCache(data) { localStorage.setItem('tradingDataCache', JSON.stringify(data)); }
+        function saveToCache(trades, withdraws) { 
+            localStorage.setItem('tradingDataCache', JSON.stringify(trades)); 
+            localStorage.setItem('withdrawDataCache', JSON.stringify(withdraws)); 
+        }
+        
         function loadFromCache() {
-            const cachedData = localStorage.getItem('tradingDataCache');
-            return cachedData ? JSON.parse(cachedData) : [];
+            const cachedTrades = localStorage.getItem('tradingDataCache');
+            const cachedWithdraws = localStorage.getItem('withdrawDataCache');
+            return {
+                trades: cachedTrades ? JSON.parse(cachedTrades) : [],
+                withdraws: cachedWithdraws ? JSON.parse(cachedWithdraws) : []
+            };
         }
 
         async function syncWithAirtable() {
             ui.syncStatus.textContent = 'Menyinkronkan dengan server...';
             try {
-                const response = await fetch(airtableUrl, { headers: apiHeaders });
-                if (!response.ok) throw new Error('Gagal mengambil data dari server');
-                const data = await response.json();
-                const freshData = data.records.map(record => ({ id: record.id, ...record.fields }));
+                // Sync trades
+                const tradesResponse = await fetch(tradesUrl, { headers: apiHeaders });
+                if (!tradesResponse.ok) throw new Error('Gagal mengambil data trades dari server');
+                const tradesData = await tradesResponse.json();
+                const freshTrades = tradesData.records.map(record => ({ id: record.id, ...record.fields }));
                 
-                tradingData = freshData;
-                saveToCache(freshData);
+                // Sync withdraws
+                const withdrawsResponse = await fetch(withdrawsUrl, { headers: apiHeaders });
+                if (!withdrawsResponse.ok) throw new Error('Gagal mengambil data withdraws dari server');
+                const withdrawsData = await withdrawsResponse.json();
+                const freshWithdraws = withdrawsData.records.map(record => ({ id: record.id, ...record.fields }));
+                
+                tradingData = freshTrades;
+                withdrawData = freshWithdraws;
+                saveToCache(freshTrades, freshWithdraws);
                 fullUpdate();
                 ui.syncStatus.textContent = `Data disinkronkan pada ${new Date().toLocaleTimeString()}`;
             } catch (error) {
@@ -139,18 +1015,19 @@
             }
         }
 
-        // --- CORE FUNCTIONS ---
-        function getInitialBalance() { return parseFloat(ui.initialBalanceInput.value) || 0; }
-        function calculatePips(pair, position, entry, exit) {
-            if (!pair || !position || typeof entry !== 'number' || typeof exit !== 'number') return 0;
-            const multiplier = pair.toUpperCase().includes('JPY') ? 100 : 10000;
-            return parseFloat(((position === 'Buy' ? exit - entry : entry - exit) * multiplier).toFixed(1));
+        // --- CORE FUNCTIONS WITH ENHANCED CALCULATIONS ---
+        function getInitialBalance() { 
+            return parseFloat(ui.initialBalanceInput.value) || 0; 
         }
-        function calculateProfitInUsd(pair, pips, lotSize) {
-            if (!pair) return 0;
-            const pipValue = pair.toUpperCase().includes('JPY') ? 7 : 10;
-            return pips * (lotSize || 0) * pipValue;
+        
+        function getCurrentPair() {
+            const pairSelect = document.getElementById('pair');
+            if (pairSelect.value === 'custom') {
+                return document.getElementById('customPair').value || 'EURUSD';
+            }
+            return pairSelect.value || 'EURUSD';
         }
+
         function calculateRiskReward(position, entry, sl, tp) {
             if (!sl || !tp || !entry) return 'N/A';
             const profit = Math.abs(position === 'Buy' ? tp - entry : entry - tp);
@@ -158,356 +1035,1390 @@
             return loss > 0 ? `1:${(profit / loss).toFixed(2)}` : 'Inf';
         }
 
+        function getTotalTradingPL() {
+            return tradingData.reduce((acc, trade) => {
+                const pips = ForexCalculator.calculatePips(trade.pair, trade.position, trade.entryPrice, trade.exitPrice);
+                return acc + ForexCalculator.calculateProfitInUsd(trade.pair, pips, trade.lotSize);
+            }, 0);
+        }
+
+        function getTotalWithdraws() {
+            return withdrawData.reduce((acc, withdraw) => acc + (parseFloat(withdraw.amount) || 0), 0);
+        }
+
+        function getCurrentBalance() {
+            const initialBalance = getInitialBalance();
+            const totalPL = getTotalTradingPL();
+            const totalWithdraws = getTotalWithdraws();
+            return initialBalance + totalPL - totalWithdraws;
+        }
+
+        function updateAvailableBalance() {
+            const availableBalance = getCurrentBalance();
+            document.getElementById('availableBalance').textContent = `${availableBalance.toFixed(2)}`;
+        }
+
+        function updateBalanceAfterWithdraw() {
+            const withdrawAmount = parseFloat(document.getElementById('withdrawAmount').value) || 0;
+            const currentBalance = getCurrentBalance();
+            const balanceAfter = currentBalance - withdrawAmount;
+            
+            document.getElementById('balanceAfterWithdraw').textContent = `${balanceAfter.toFixed(2)}`;
+            document.getElementById('balanceAfterWithdraw').style.color = balanceAfter < 0 ? '#dc2626' : '#059669';
+        }
+
         function renderTable() {
             ui.tableBody.innerHTML = '';
             const sortedData = [...tradingData].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
             sortedData.forEach(trade => {
-                const pips = calculatePips(trade.pair, trade.position, trade.entryPrice, trade.exitPrice);
-                const profitUsd = calculateProfitInUsd(trade.pair, pips, trade.lotSize);
+                const pips = ForexCalculator.calculatePips(trade.pair, trade.position, trade.entryPrice, trade.exitPrice);
+                const profitUsd = ForexCalculator.calculateProfitInUsd(trade.pair, pips, trade.lotSize);
                 const rr = calculateRiskReward(trade.position, trade.entryPrice, trade.stopLoss, trade.takeProfit);
                 const profitClass = profitUsd >= 0 ? 'profit' : 'loss';
+                
+                // Function untuk membuat hyperlink dari text
+                const createHyperlinks = (text) => {
+                    if (!text) return '';
+                    
+                    // Regex untuk mendeteksi URL (http, https, www)
+                    const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+|[^\s]+\.[a-z]{2,}(?:\/[^\s]*)?)/gi;
+                    
+                    return text.replace(urlRegex, (url) => {
+                        let href = url;
+                        // Tambahkan https:// jika belum ada protocol
+                        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                            href = 'https://' + url;
+                        }
+                        // Potong URL untuk display jika terlalu panjang
+                        const displayUrl = url.length > 15 ? url.substring(0, 15) + '...' : url;
+                        return `<a href="${href}" target="_blank" rel="noopener noreferrer" 
+                                   class="text-blue-600 hover:text-blue-800 underline hover:no-underline transition-colors duration-200"
+                                   title="${url}">${displayUrl}</a>`;
+                    });
+                };
+                
                 const row = document.createElement('tr');
                 row.dataset.id = trade.id;
                 row.innerHTML = `
-                    <td class="flex gap-2"><button class="btn-edit" data-id="${trade.id}">E</button><button class="btn-delete" data-id="${trade.id}">H</button></td>
+                    <td class="flex gap-2">
+                        <button class="btn-edit" data-id="${trade.id}">E</button>
+                        <button class="btn-delete" data-id="${trade.id}">H</button>
+                    </td>
                     <td>${new Date(trade.date).toLocaleDateString('id-ID')}</td>
                     <td>${trade.pair || ''}</td>
                     <td>${trade.position || ''}</td>
-                    <td class="${profitClass}">$${profitUsd.toFixed(2)}</td>
+                    <td class="${profitClass}">${profitUsd.toFixed(2)}</td>
                     <td class="${pips >= 0 ? 'profit' : 'loss'}">${pips}</td>
                     <td>${trade.lotSize || 0}</td>
                     <td>${rr}</td>
                     <td>${trade.reason || ''}</td>
+                    <td class="max-w-xs">
+                        <div class="break-words text-sm leading-relaxed">
+                            ${createHyperlinks(trade.lessons || '')}
+                        </div>
+                    </td>
                 `;
                 ui.tableBody.appendChild(row);
             });
         }
+
+        function renderWithdrawTable() {
+            ui.withdrawTableBody.innerHTML = '';
+            const sortedData = [...withdrawData].sort((a, b) => new Date(b.withdrawDate) - new Date(a.withdrawDate));
+            
+            sortedData.forEach(withdraw => {
+                const row = document.createElement('tr');
+                row.dataset.id = withdraw.id;
+                row.innerHTML = `
+                    <td class="flex gap-2">
+                        <button class="btn-edit" data-id="${withdraw.id}" data-type="withdraw">E</button>
+                        <button class="btn-delete" data-id="${withdraw.id}" data-type="withdraw">H</button>
+                    </td>
+                    <td>${new Date(withdraw.withdrawDate).toLocaleDateString('id-ID')}</td>
+                    <td class="withdraw-amount">-${parseFloat(withdraw.amount || 0).toFixed(2)}</td>
+                    <td class="font-semibold">${parseFloat(withdraw.balanceAfter || 0).toFixed(2)}</td>
+                    <td class="max-w-xs">
+                        <div class="break-words text-sm">${withdraw.withdrawNotes || ''}</div>
+                    </td>
+                `;
+                ui.withdrawTableBody.appendChild(row);
+            });
+        }
+
+        function updateWithdrawStats() {
+            const totalWithdrawn = getTotalWithdraws();
+            const withdrawCount = withdrawData.length;
+            const averageWithdraw = withdrawCount > 0 ? totalWithdrawn / withdrawCount : 0;
+
+            document.getElementById('totalWithdrawn').textContent = `${totalWithdrawn.toFixed(2)}`;
+            document.getElementById('withdrawCount').textContent = withdrawCount;
+            document.getElementById('averageWithdraw').textContent = `${averageWithdraw.toFixed(2)}`;
+        }
         
         function updateAllStats() {
             const initialBalance = getInitialBalance();
-            const totalPl = tradingData.reduce((acc, trade) => acc + calculateProfitInUsd(trade.pair, calculatePips(trade.pair, trade.position, trade.entryPrice, trade.exitPrice), trade.lotSize), 0);
-            document.getElementById('currentBalanceValue').textContent = `$${(initialBalance + totalPl).toFixed(2)}`;
-            document.getElementById('totalPlValue').textContent = `$${totalPl.toFixed(2)}`;
-            document.getElementById('plPercentageValue').textContent = `${initialBalance > 0 ? (totalPl / initialBalance * 100).toFixed(2) : 0}%`;
+            const totalPl = getTotalTradingPL();
+            const totalWithdraws = getTotalWithdraws();
+            const currentBalance = initialBalance + totalPl - totalWithdraws;
 
+            document.getElementById('currentBalanceValue').textContent = `${currentBalance.toFixed(2)}`;
+            document.getElementById('totalPlValue').textContent = `${totalPl.toFixed(2)}`;
+            document.getElementById('totalPlValue').className = totalPl >= 0 ? 'text-2xl font-bold mt-1 profit' : 'text-2xl font-bold mt-1 loss';
+            document.getElementById('plPercentageValue').textContent = `${initialBalance > 0 ? (totalPl / initialBalance * 100).toFixed(2) : 0}%`;
+            document.getElementById('plPercentageValue').className = totalPl >= 0 ? 'text-2xl font-bold mt-1 profit' : 'text-2xl font-bold mt-1 loss';
+
+            // Calculate detailed statistics
             const stats = tradingData.reduce((acc, trade) => {
-                const profit = calculateProfitInUsd(trade.pair, calculatePips(trade.pair, trade.position, trade.entryPrice, trade.exitPrice), trade.lotSize);
+                const pips = ForexCalculator.calculatePips(trade.pair, trade.position, trade.entryPrice, trade.exitPrice);
+                const profit = ForexCalculator.calculateProfitInUsd(trade.pair, pips, trade.lotSize);
                 acc.total++;
-                if (profit > 0) { acc.wins++; acc.grossProfit += profit; } else { acc.losses++; acc.grossLoss += profit; }
+                if (profit > 0) { 
+                    acc.wins++; 
+                    acc.grossProfit += profit; 
+                } else { 
+                    acc.losses++; 
+                    acc.grossLoss += Math.abs(profit); 
+                }
                 return acc;
             }, { total: 0, wins: 0, losses: 0, grossProfit: 0, grossLoss: 0 });
+
             const winRate = stats.total > 0 ? (stats.wins / stats.total) * 100 : 0;
+            const lossRate = stats.total > 0 ? (stats.losses / stats.total) * 100 : 0;
             const avgWin = stats.wins > 0 ? stats.grossProfit / stats.wins : 0;
             const avgLoss = stats.losses > 0 ? stats.grossLoss / stats.losses : 0;
-            const profitFactor = stats.grossLoss !== 0 ? Math.abs(stats.grossProfit / stats.grossLoss) : Infinity;
+            const profitFactor = stats.grossLoss !== 0 ? stats.grossProfit / stats.grossLoss : Infinity;
+
             document.getElementById('statisticsBody').innerHTML = `
                 <tr><td class="py-2">Total Trades</td><td class="text-right">${stats.total}</td></tr>
                 <tr><td class="py-2">Winning Trades</td><td class="text-right">${stats.wins} (${winRate.toFixed(2)}%)</td></tr>
-                <tr><td class="py-2">Losing Trades</td><td class="text-right">${stats.losses}</td></tr>
+                <tr><td class="py-2">Losing Trades</td><td class="text-right">${stats.losses} (${lossRate.toFixed(2)}%)</td></tr>
                 <tr><td class="py-2">Profit Factor</td><td class="text-right">${profitFactor === Infinity ? 'Inf' : profitFactor.toFixed(2)}</td></tr>
-                <tr><td class="py-2">Average Profit</td><td class="text-right profit">$${avgWin.toFixed(2)}</td></tr>
-                <tr><td class="py-2">Average Loss</td><td class="text-right loss">$${avgLoss.toFixed(2)}</td></tr>
+                <tr><td class="py-2">Average Profit</td><td class="text-right profit">${avgWin.toFixed(2)}</td></tr>
+                <tr><td class="py-2">Average Loss</td><td class="text-right loss">${avgLoss.toFixed(2)}</td></tr>
             `;
 
-            const renderSummary = (containerId, key) => {
+            // Update withdraw stats
+            updateWithdrawStats();
+            updateAvailableBalance();
+        }
+
+        function renderAnalysisTab() {
+            renderAnalysisTables();
+            renderPairAnalysis();
+        }
+
+        function renderAnalysisTables() {
+            const renderSummary = (containerId, key, displayName) => {
                 const summary = tradingData.reduce((acc, trade) => {
                     const k = trade[key] || 'N/A';
-                    if (!acc[k]) acc[k] = { total: 0, wins: 0 };
+                    if (!acc[k]) acc[k] = { total: 0, wins: 0, losses: 0, grossProfit: 0, grossLoss: 0, losingTrades: [] };
                     acc[k].total++;
-                    if (calculatePips(trade.pair, trade.position, trade.entryPrice, trade.exitPrice) > 0) acc[k].wins++;
+                    
+                    const pips = ForexCalculator.calculatePips(trade.pair, trade.position, trade.entryPrice, trade.exitPrice);
+                    const profit = ForexCalculator.calculateProfitInUsd(trade.pair, pips, trade.lotSize);
+                    
+                    if (profit > 0) {
+                        acc[k].wins++;
+                        acc[k].grossProfit += profit;
+                    } else {
+                        acc[k].losses++;
+                        acc[k].grossLoss += Math.abs(profit);
+                        acc[k].losingTrades.push({
+                            id: trade.id,
+                            date: trade.date,
+                            pair: trade.pair,
+                            position: trade.position,
+                            lotSize: trade.lotSize,
+                            profit: profit,
+                            pips: pips
+                        });
+                    }
                     return acc;
                 }, {});
-                document.getElementById(containerId).innerHTML = Object.entries(summary).sort().map(([k, v]) => `
-                    <div class="summary-item"><span>${k}</span><span class="percentage">${((v.wins / v.total) * 100).toFixed(1)}%</span></div>
-                `).join('');
+                
+                // Create enhanced table HTML
+                const tableHtml = `
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b">
+                                    <th class="text-left py-2 px-1 font-medium">${displayName}</th>
+                                    <th class="text-center py-2 px-1 font-medium">Total</th>
+                                    <th class="text-center py-2 px-1 font-medium">Win Rate</th>
+                                    <th class="text-center py-2 px-1 font-medium">Gross P/L</th>
+                                    <th class="text-center py-2 px-1 font-medium">Avg Win</th>
+                                    <th class="text-center py-2 px-1 font-medium">Avg Loss</th>
+                                    <th class="text-center py-2 px-1 font-medium">Profit Factor</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${Object.entries(summary).sort().map(([k, v]) => {
+                                    const winRate = (v.wins / v.total) * 100;
+                                    const netProfit = v.grossProfit - v.grossLoss;
+                                    const avgWin = v.wins > 0 ? v.grossProfit / v.wins : 0;
+                                    const avgLoss = v.losses > 0 ? v.grossLoss / v.losses : 0;
+                                    const profitFactor = v.grossLoss > 0 ? v.grossProfit / v.grossLoss : 'Inf';
+                                    
+                                    return `
+                                        <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                            <td class="py-2 px-1 font-medium">${k}</td>
+                                            <td class="text-center py-2 px-1 text-gray-600">${v.total}</td>
+                                            <td class="text-center py-2 px-1">
+                                                <span class="${winRate >= 50 ? 'text-green-600' : 'text-red-600'} font-semibold">
+                                                    ${winRate.toFixed(1)}%
+                                                </span>
+                                            </td>
+                                            <td class="text-center py-2 px-1">
+                                                <span class="${netProfit >= 0 ? 'text-green-600' : 'text-red-600'} font-semibold">
+                                                    ${netProfit.toFixed(2)}
+                                                </span>
+                                            </td>
+                                            <td class="text-center py-2 px-1 text-green-600">${avgWin.toFixed(2)}</td>
+                                            <td class="text-center py-2 px-1 text-red-600">${avgLoss.toFixed(2)}</td>
+                                            <td class="text-center py-2 px-1">
+                                                <span class="${profitFactor === 'Inf' || profitFactor >= 1 ? 'text-green-600' : 'text-red-600'} font-semibold">
+                                                    ${profitFactor === 'Inf' ? 'Inf' : profitFactor.toFixed(2)}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                
+                document.getElementById(containerId).innerHTML = tableHtml;
             };
-            renderSummary('strategySummary', 'reason');
-            renderSummary('timeframeSummary', 'timeframe');
 
-            const getWeekKey = d => { const date = new Date(d); date.setDate(date.getDate() - (date.getDay() + 6) % 7); return date.toISOString().split('T')[0]; };
-            const getMonthKey = d => new Date(d).toISOString().slice(0, 7);
-            const renderPeriodicPerf = (tableId, grouper) => {
-                const perf = tradingData.reduce((acc, trade) => {
-                    const key = grouper(trade.date);
-                    if (!acc[key]) acc[key] = { trades: 0, wins: 0, profit: 0 };
-                    const profit = calculateProfitInUsd(trade.pair, calculatePips(trade.pair, trade.position, trade.entryPrice, trade.exitPrice), trade.lotSize);
-                    acc[key].trades++;
-                    acc[key].profit += profit;
-                    if (profit > 0) acc[key].wins++;
-                    return acc;
-                }, {});
-                document.querySelector(`#${tableId} tbody`).innerHTML = Object.entries(perf).sort((a,b) => b[0].localeCompare(a[0])).map(([period, stats]) => `
-                    <tr><td>${period}</td><td>${stats.trades}</td><td>${((stats.wins / stats.trades) * 100).toFixed(1)}%</td><td class="${stats.profit >= 0 ? 'profit' : 'loss'}">$${stats.profit.toFixed(2)}</td></tr>
-                `).join('');
+            renderSummary('strategyAnalysisTable', 'reason', 'Strategy');
+            renderSummary('timeframeAnalysisTable', 'timeframe', 'Timeframe');
+        }
+
+        function renderPerformanceTab() {
+            renderPeriodicPerformance();
+            drawMonthlyProfitChart();
+        }
+
+        function renderPeriodicPerformance() {
+            const getWeekKey = d => { 
+                const date = new Date(d); 
+                date.setDate(date.getDate() - (date.getDay() + 6) % 7); 
+                return date.toISOString().split('T')[0]; 
             };
-            renderPeriodicPerf('weeklyPerformanceTable', getWeekKey);
-            renderPeriodicPerf('monthlyPerformanceTable', getMonthKey);
+            const getMonthKey = d => new Date(d).toISOString().slice(0, 7);
+            
+            const renderPeriodicPerf = (tableId, grouper, type) => {
+                const initialBalance = getInitialBalance();
+                
+                // Group trades by period and calculate running balance
+                const periods = {};
+                let runningBalance = initialBalance;
+                
+                // Sort trades by date first
+                const sortedTrades = [...tradingData].sort((a, b) => new Date(a.date) - new Date(b.date));
+                
+                sortedTrades.forEach(trade => {
+                    const key = grouper(trade.date);
+                    if (!periods[key]) {
+                        periods[key] = { 
+                            trades: 0, 
+                            wins: 0, 
+                            profit: 0, 
+                            lossPairs: new Set(),
+                            startBalance: runningBalance
+                        };
+                    }
+                    
+                    const pips = ForexCalculator.calculatePips(trade.pair, trade.position, trade.entryPrice, trade.exitPrice);
+                    const profit = ForexCalculator.calculateProfitInUsd(trade.pair, pips, trade.lotSize);
+                    
+                    periods[key].trades++;
+                    periods[key].profit += profit;
+                    runningBalance += profit;
+                    
+                    if (profit > 0) {
+                        periods[key].wins++;
+                    } else {
+                        periods[key].lossPairs.add(trade.pair);
+                    }
+                });
+                
+                // Calculate end balance for each period
+                Object.keys(periods).forEach(key => {
+                    periods[key].endBalance = periods[key].startBalance + periods[key].profit;
+                });
+                
+                document.querySelector(`#${tableId} tbody`).innerHTML = Object.entries(periods)
+                    .sort((a, b) => b[0].localeCompare(a[0]))
+                    .map(([period, stats]) => {
+                        const winRate = ((stats.wins / stats.trades) * 100).toFixed(1);
+                        const profitPercentage = stats.startBalance > 0 ? 
+                            ((stats.profit / stats.startBalance) * 100).toFixed(2) : '0.00';
+                        
+                        return `
+                            <tr>
+                                <td class="performance-table text-center font-medium">${type === 'week' ? 'Week of ' + period : period}</td>
+                                <td class="performance-table text-center">${stats.trades}</td>
+                                <td class="performance-table text-center">
+                                    <span class="${parseFloat(winRate) >= 50 ? 'text-green-600' : 'text-red-600'} font-semibold">
+                                        ${winRate}%
+                                    </span>
+                                </td>
+                                <td class="performance-table text-center">
+                                    <span class="${stats.profit >= 0 ? 'profit' : 'loss'} font-semibold">
+                                        ${stats.profit.toFixed(2)}
+                                    </span>
+                                </td>
+                                <td class="performance-table text-center">
+                                    <span class="${parseFloat(profitPercentage) >= 0 ? 'text-green-600' : 'text-red-600'} font-semibold">
+                                        ${profitPercentage}%
+                                    </span>
+                                </td>
+                                <td class="performance-table">
+                                    <div class="loss-pairs-cell">
+                                        ${[...stats.lossPairs].map(p => 
+                                            `<a href="#" class="loss-pair text-red-600 hover:text-red-800 underline" data-period="${period}" data-pair="${p}">${p}</a>`
+                                        ).join(" ")}
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+            };
+            
+            renderPeriodicPerf('weeklyPerformanceTable', getWeekKey, 'week');
+            renderPeriodicPerf('monthlyPerformanceTable', getMonthKey, 'month');
+            
+            // Add loss pair click handlers
+            addLossPairHandlers();
+        }
+
+        function drawMonthlyProfitChart() {
+            const svg = d3.select("#monthlyProfitChart");
+            svg.selectAll("*").remove();
+            
+            const container = document.querySelector('#monthlyProfitChart').closest('.chart-container');
+            if (!container) return;
+            
+            const containerWidth = container.clientWidth;
+            const containerHeight = 400;
+            
+            if (containerWidth === 0) {
+                setTimeout(drawMonthlyProfitChart, 100);
+                return;
+            }
+            
+            svg.attr("width", containerWidth).attr("height", containerHeight);
+            
+            const margin = { top: 20, right: 30, bottom: 60, left: 80 };
+            const width = containerWidth - margin.left - margin.right;
+            const height = containerHeight - margin.top - margin.bottom;
+
+            const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+            
+            // Calculate monthly data
+            const getMonthKey = d => new Date(d).toISOString().slice(0, 7);
+            const initialBalance = getInitialBalance();
+            
+            const monthlyData = {};
+            let runningBalance = initialBalance;
+            
+            // Sort trades by date
+            const sortedTrades = [...tradingData].sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            sortedTrades.forEach(trade => {
+                const monthKey = getMonthKey(trade.date);
+                if (!monthlyData[monthKey]) {
+                    monthlyData[monthKey] = { 
+                        month: monthKey,
+                        profit: 0, 
+                        startBalance: runningBalance,
+                        trades: 0
+                    };
+                }
+                
+                const pips = ForexCalculator.calculatePips(trade.pair, trade.position, trade.entryPrice, trade.exitPrice);
+                const profit = ForexCalculator.calculateProfitInUsd(trade.pair, pips, trade.lotSize);
+                
+                monthlyData[monthKey].profit += profit;
+                monthlyData[monthKey].trades++;
+                runningBalance += profit;
+            });
+
+            // Convert to array and add percentage calculations
+            const chartData = Object.values(monthlyData).map(d => ({
+                ...d,
+                profitPercentage: d.startBalance > 0 ? (d.profit / d.startBalance) * 100 : 0,
+                monthName: new Date(d.month + '-01').toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'short' 
+                })
+            })).sort((a, b) => a.month.localeCompare(b.month));
+
+            if (chartData.length === 0) {
+                g.append("text")
+                    .attr("x", width / 2)
+                    .attr("y", height / 2)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "#6b7280")
+                    .style("font-size", "16px")
+                    .text("No monthly data available");
+                return;
+            }
+
+            // Scales
+            const xScale = d3.scaleBand()
+                .domain(chartData.map(d => d.monthName))
+                .range([0, width])
+                .padding(0.2);
+
+            const yExtent = d3.extent(chartData, d => d.profitPercentage);
+            const yMax = Math.max(Math.abs(yExtent[0] || 0), Math.abs(yExtent[1] || 0));
+            const yScale = d3.scaleLinear()
+                .domain([-yMax * 1.1, yMax * 1.1])
+                .range([height, 0]);
+
+            // Add zero line
+            g.append("line")
+                .attr("x1", 0)
+                .attr("x2", width)
+                .attr("y1", yScale(0))
+                .attr("y2", yScale(0))
+                .attr("stroke", "#6b7280")
+                .attr("stroke-width", 2)
+                .attr("stroke-dasharray", "3,3");
+
+            // Create gradient definitions
+            const defs = svg.append("defs");
+            
+            const positiveGradient = defs.append("linearGradient")
+                .attr("id", "positiveGradient")
+                .attr("x1", "0%").attr("y1", "0%")
+                .attr("x2", "0%").attr("y2", "100%");
+            
+            positiveGradient.append("stop")
+                .attr("offset", "0%")
+                .attr("stop-color", "#10b981")
+                .attr("stop-opacity", 0.8);
+            
+            positiveGradient.append("stop")
+                .attr("offset", "100%")
+                .attr("stop-color", "#34d399")
+                .attr("stop-opacity", 0.6);
+
+            const negativeGradient = defs.append("linearGradient")
+                .attr("id", "negativeGradient")
+                .attr("x1", "0%").attr("y1", "0%")
+                .attr("x2", "0%").attr("y2", "100%");
+            
+            negativeGradient.append("stop")
+                .attr("offset", "0%")
+                .attr("stop-color", "#ef4444")
+                .attr("stop-opacity", 0.8);
+            
+            negativeGradient.append("stop")
+                .attr("offset", "100%")
+                .attr("stop-color", "#f87171")
+                .attr("stop-opacity", 0.6);
+
+            // Create bars
+            g.selectAll(".bar")
+                .data(chartData)
+                .enter().append("rect")
+                .attr("class", "bar")
+                .attr("x", d => xScale(d.monthName))
+                .attr("width", xScale.bandwidth())
+                .attr("y", d => d.profitPercentage >= 0 ? yScale(d.profitPercentage) : yScale(0))
+                .attr("height", d => Math.abs(yScale(d.profitPercentage) - yScale(0)))
+                .attr("fill", d => d.profitPercentage >= 0 ? "url(#positiveGradient)" : "url(#negativeGradient)")
+                .attr("stroke", "white")
+                .attr("stroke-width", 1)
+                .style("cursor", "pointer");
+
+            // Add value labels on bars
+            g.selectAll(".bar-label")
+                .data(chartData)
+                .enter().append("text")
+                .attr("class", "bar-label")
+                .attr("x", d => xScale(d.monthName) + xScale.bandwidth() / 2)
+                .attr("y", d => {
+                    const barY = d.profitPercentage >= 0 ? yScale(d.profitPercentage) : yScale(0);
+                    return d.profitPercentage >= 0 ? barY - 5 : barY + 15;
+                })
+                .attr("text-anchor", "middle")
+                .style("font-size", "11px")
+                .style("font-weight", "bold")
+                .style("fill", d => d.profitPercentage >= 0 ? "#059669" : "#dc2626")
+                .text(d => d.profitPercentage.toFixed(1) + "%");
+
+            // Add axes
+            g.append("g")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(xScale))
+                .selectAll("text")
+                .style("font-size", "12px")
+                .attr("transform", "rotate(-45)")
+                .style("text-anchor", "end");
+
+            g.append("g")
+                .call(d3.axisLeft(yScale)
+                    .tickFormat(d => d + "%")
+                    .ticks(8))
+                .selectAll("text")
+                .style("font-size", "12px");
+
+            // Add axis labels
+            g.append("text")
+                .attr("transform", "rotate(-90)")
+                .attr("y", 0 - margin.left)
+                .attr("x", 0 - (height / 2))
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .style("font-size", "14px")
+                .style("fill", "#374151")
+                .text("Profit Percentage (%)");
+
+            g.append("text")
+                .attr("transform", `translate(${width / 2}, ${height + margin.bottom - 5})`)
+                .style("text-anchor", "middle")
+                .style("font-size", "14px")
+                .style("fill", "#374151")
+                .text("Month");
+
+            // Add tooltip
+            const tooltip = d3.select("body").append("div")
+                .attr("class", "tooltip")
+                .style("position", "absolute")
+                .style("background", "rgba(0, 0, 0, 0.9)")
+                .style("color", "white")
+                .style("padding", "10px")
+                .style("border-radius", "6px")
+                .style("font-size", "12px")
+                .style("pointer-events", "none")
+                .style("opacity", 0)
+                .style("z-index", 1000);
+
+            // Add hover effects
+            g.selectAll(".bar")
+                .on("mouseover", function(event, d) {
+                    d3.select(this)
+                        .transition().duration(200)
+                        .attr("opacity", 0.8)
+                        .attr("stroke-width", 2);
+
+                    tooltip.transition().duration(200).style("opacity", 0.9);
+                    tooltip.html(`
+                        <div><strong>${d.monthName}</strong></div>
+                        <div>Trades: ${d.trades}</div>
+                        <div>Profit: ${d.profit.toFixed(2)}</div>
+                        <div>Percentage: ${d.profitPercentage.toFixed(2)}%</div>
+                        <div>Start Balance: ${d.startBalance.toFixed(2)}</div>
+                    `)
+                    .style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 10) + "px");
+                })
+                .on("mousemove", function(event) {
+                    tooltip.style("left", (event.pageX + 10) + "px")
+                        .style("top", (event.pageY - 10) + "px");
+                })
+                .on("mouseout", function() {
+                    d3.select(this)
+                        .transition().duration(200)
+                        .attr("opacity", 1)
+                        .attr("stroke-width", 1);
+                    tooltip.transition().duration(300).style("opacity", 0);
+                });
+
+            // Clean up tooltip
+            setTimeout(() => {
+                const existingTooltips = document.querySelectorAll('.tooltip');
+                existingTooltips.forEach(t => {
+                    if (t !== tooltip.node()) t.remove();
+                });
+            }, 100);
+        }
+
+        function addLossPairHandlers() {
+            document.querySelectorAll('.loss-pair').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const pair = this.dataset.pair;
+                    const period = this.dataset.period;
+
+                    const getWeekKey = d => { 
+                        const date = new Date(d); 
+                        date.setDate(date.getDate() - (date.getDay() + 6) % 7); 
+                        return date.toISOString().split('T')[0]; 
+                    };
+                    const getMonthKey = d => new Date(d).toISOString().slice(0, 7);
+
+                    const filterByPeriod = (dateStr) => {
+                        const d = new Date(dateStr);
+                        const key = this.closest('table').id === 'weeklyPerformanceTable'
+                            ? getWeekKey(d) : getMonthKey(d);
+                        return key === period;
+                    };
+
+                    const filtered = tradingData.filter(t => {
+                        const pips = ForexCalculator.calculatePips(t.pair, t.position, t.entryPrice, t.exitPrice);
+                        const profit = ForexCalculator.calculateProfitInUsd(t.pair, pips, t.lotSize);
+                        return t.pair === pair && filterByPeriod(t.date) && profit < 0;
+                    });
+                    
+                    if (filtered.length === 0) return;
+
+                    alert(`Loss History for ${pair} in ${period}:\n\n` +
+                          filtered.map(t => {
+                              const pips = ForexCalculator.calculatePips(t.pair, t.position, t.entryPrice, t.exitPrice);
+                              const profit = ForexCalculator.calculateProfitInUsd(t.pair, pips, t.lotSize);
+                              return `📉 ${t.date.slice(0,10)} | ${t.pair} | ${t.position} | Lot: ${t.lotSize} | Loss: ${profit.toFixed(2)}`;
+                          }).join('\n'));
+                });
+            });
+        }
+
+        function addLossDetailsHandlers() {
+            document.querySelectorAll('.loss-details-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const key = this.dataset.key;
+                    const type = this.dataset.type;
+                    const losses = JSON.parse(this.dataset.losses);
+                    
+                    if (losses.length === 0) return;
+                    
+                    // Create modal content
+                    const modalContent = `
+                        <div id="lossModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="z-index: 9999;">
+                            <div class="bg-white rounded-lg p-6 max-w-4xl max-h-[80vh] overflow-y-auto m-4">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h3 class="text-lg font-bold">Losing Trades - ${type === 'reason' ? 'Strategy' : 'Timeframe'}: ${key}</h3>
+                                    <button id="closeLossModal" class="text-gray-500 hover:text-gray-700 text-xl">&times;</button>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-sm border-collapse">
+                                        <thead>
+                                            <tr class="bg-gray-100">
+                                                <th class="border p-2 text-left">Date</th>
+                                                <th class="border p-2 text-left">Pair</th>
+                                                <th class="border p-2 text-left">Position</th>
+                                                <th class="border p-2 text-center">Lot</th>
+                                                <th class="border p-2 text-right">Pips</th>
+                                                <th class="border p-2 text-right">P/L (USD)</th>
+                                                <th class="border p-2 text-center">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${losses.map(trade => `
+                                                <tr class="hover:bg-gray-50">
+                                                    <td class="border p-2">${new Date(trade.date).toLocaleDateString('id-ID')}</td>
+                                                    <td class="border p-2 font-medium">${trade.pair}</td>
+                                                    <td class="border p-2">${trade.position}</td>
+                                                    <td class="border p-2 text-center">${trade.lotSize}</td>
+                                                    <td class="border p-2 text-right text-red-600">${trade.pips.toFixed(1)}</td>
+                                                    <td class="border p-2 text-right text-red-600 font-medium">${trade.profit.toFixed(2)}</td>
+                                                    <td class="border p-2 text-center">
+                                                        <button class="bg-amber-500 text-white px-2 py-1 rounded text-xs hover:bg-amber-600 edit-from-modal" data-id="${trade.id}">
+                                                            Edit
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="mt-4 text-sm text-gray-600">
+                                    <strong>Summary:</strong> ${losses.length} losing trades | 
+                                    Total Loss: <span class="text-red-600 font-medium">${losses.reduce((sum, t) => sum + t.profit, 0).toFixed(2)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Add modal to body
+                    document.body.insertAdjacentHTML('beforeend', modalContent);
+                    
+                    // Add event listeners
+                    document.getElementById('closeLossModal').addEventListener('click', () => {
+                        document.getElementById('lossModal').remove();
+                    });
+                    
+                    // Close on background click
+                    document.getElementById('lossModal').addEventListener('click', (e) => {
+                        if (e.target.id === 'lossModal') {
+                            document.getElementById('lossModal').remove();
+                        }
+                    });
+                    
+                    // Handle edit buttons
+                    document.querySelectorAll('.edit-from-modal').forEach(editBtn => {
+                        editBtn.addEventListener('click', function() {
+                            const tradeId = this.dataset.id;
+                            document.getElementById('lossModal').remove();
+                            
+                            // Find the edit button in the main table and click it
+                            const mainEditBtn = document.querySelector(`button.btn-edit[data-id="${tradeId}"]`);
+                            if (mainEditBtn) {
+                                mainEditBtn.click();
+                            }
+                        });
+                    });
+                });
+            });
+        }
+
+        // 1. Tambahkan fungsi untuk membuat analisis pair
+        function createPairAnalysis() {
+            const pairStats = tradingData.reduce((acc, trade) => {
+                const pair = trade.pair || 'N/A';
+                if (!acc[pair]) {
+                    acc[pair] = { 
+                        total: 0, 
+                        wins: 0, 
+                        losses: 0, 
+                        totalProfit: 0,
+                        winProfit: 0,
+                        lossAmount: 0
+                    };
+                }
+                
+                acc[pair].total++;
+                const pips = ForexCalculator.calculatePips(trade.pair, trade.position, trade.entryPrice, trade.exitPrice);
+                const profit = ForexCalculator.calculateProfitInUsd(trade.pair, pips, trade.lotSize);
+                
+                acc[pair].totalProfit += profit;
+                
+                if (profit > 0) {
+                    acc[pair].wins++;
+                    acc[pair].winProfit += profit;
+                } else {
+                    acc[pair].losses++;
+                    acc[pair].lossAmount += Math.abs(profit);
+                }
+                
+                return acc;
+            }, {});
+
+            return pairStats;
+        }
+
+        // 2. Fungsi untuk membuat donut chart dengan D3.js
+        function createDonutChart(containerId, data, title, valueKey, colorScheme = 'category10') {
+            const container = document.getElementById(containerId);
+            container.innerHTML = `<h4 class="text-lg font-semibold mb-3 text-center text-gray-800">${title}</h4>`;
+            
+            if (!data || data.length === 0) {
+                container.innerHTML += '<p class="text-center text-gray-500">No data available</p>';
+                return;
+            }
+
+            const width = 320; // Diperbesar untuk accommodating labels
+            const height = 320;
+            const radius = Math.min(width, height) / 2 - 60; // Margin untuk labels
+            const innerRadius = radius * 0.5; // Dikurangi untuk memberi ruang center text
+            const outerRadius = radius;
+            const labelRadius = radius + 25; // Radius untuk label positioning
+
+            const svg = d3.select(`#${containerId}`)
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height);
+
+            const g = svg.append('g')
+                .attr('transform', `translate(${width / 2}, ${height / 2})`);
+
+            const color = d3.scaleOrdinal()
+                .domain(data.map(d => d.name))
+                .range(colorScheme === 'profit' ? 
+                    ['#10b981', '#22c55e', '#34d399', '#6ee7b7', '#9decf9', '#a7f3d0'] :
+                    colorScheme === 'loss' ?
+                    ['#ef4444', '#f87171', '#fca5a5', '#fecaca', '#fed7d7', '#fee2e2'] :
+                    d3.schemeCategory10);
+
+            const pie = d3.pie()
+                .value(d => d[valueKey])
+                .sort(null)
+                .startAngle(0)
+                .endAngle(2 * Math.PI);
+
+            const arc = d3.arc()
+                .innerRadius(innerRadius)
+                .outerRadius(outerRadius);
+
+            const labelArc = d3.arc()
+                .innerRadius(labelRadius)
+                .outerRadius(labelRadius);
+
+            const tooltip = d3.select('body')
+                .append('div')
+                .attr('class', 'donut-tooltip')
+                .style('position', 'absolute')
+                .style('background', 'rgba(0, 0, 0, 0.8)')
+                .style('color', 'white')
+                .style('padding', '8px 12px')
+                .style('border-radius', '6px')
+                .style('font-size', '12px')
+                .style('pointer-events', 'none')
+                .style('opacity', 0)
+                .style('z-index', 1000);
+
+            const arcs = g.selectAll('.arc')
+                .data(pie(data))
+                .enter().append('g')
+                .attr('class', 'arc');
+
+            // Draw slices
+            arcs.append('path')
+                .attr('d', arc)
+                .attr('fill', d => color(d.data.name))
+                .attr('stroke', 'white')
+                .attr('stroke-width', 2)
+                .style('cursor', 'pointer')
+                .style('transition', 'all 0.3s ease')
+                .on('mouseover', function(event, d) {
+                    const currentArc = d3.select(this.parentNode);
+                    
+                    // Highlight effect on slice
+                    d3.select(this)
+                        .transition()
+                        .duration(200)
+                        .attr('transform', 'scale(1.05)')
+                        .style('filter', 'brightness(1.1)');
+
+                    // Show label and line for this slice
+                    currentArc.select('.slice-label')
+                        .transition()
+                        .duration(200)
+                        .style('opacity', 1);
+                    
+                    currentArc.select('.label-line')
+                        .transition()
+                        .duration(200)
+                        .style('opacity', 0.8);
+
+                    // Update center text to show current slice info
+                    centerText.transition().duration(200)
+                        .text(() => {
+                            if (valueKey === 'total') {
+                                return d.data[valueKey];
+                            } else {
+                                return `${d.data[valueKey] > 999 ? (d.data[valueKey]/1000).toFixed(1) + 'K' : d.data[valueKey].toFixed(0)}`;
+                            }
+                        });
+                    
+                    centerSubText.transition().duration(200)
+                        .text(d.data.name);
+
+                    // Show tooltip
+                    tooltip.transition().duration(200).style('opacity', 0.9);
+                    
+                    const percentage = ((d.data[valueKey] / d3.sum(data, d => d[valueKey])) * 100).toFixed(1);
+                    let tooltipText = `<strong>${d.data.name}</strong><br/>`;
+                    
+                    if (valueKey === 'total') {
+                        tooltipText += `Trades: ${d.data[valueKey]} (${percentage}%)<br/>`;
+                        tooltipText += `Win Rate: ${((d.data.wins / d.data.total) * 100).toFixed(1)}%<br/>`;
+                        tooltipText += `P/L: <span style="color: ${d.data.totalProfit >= 0 ? '#10b981' : '#ef4444'}">${d.data.totalProfit.toFixed(2)}</span>`;
+                    } else if (valueKey === 'totalProfit') {
+                        tooltipText += `Profit: ${d.data[valueKey].toFixed(2)} (${percentage}%)<br/>`;
+                        tooltipText += `Trades: ${d.data.total} | Win Rate: ${((d.data.wins / d.data.total) * 100).toFixed(1)}%`;
+                    } else if (valueKey === 'lossAmount') {
+                        tooltipText += `Loss: ${d.data[valueKey].toFixed(2)} (${percentage}%)<br/>`;
+                        tooltipText += `Losing Trades: ${d.data.losses}/${d.data.total} (${((d.data.losses / d.data.total) * 100).toFixed(1)}%)`;
+                    }
+                    
+                    tooltip.html(tooltipText)
+                        .style('left', (event.pageX + 10) + 'px')
+                        .style('top', (event.pageY - 10) + 'px');
+                })
+                .on('mousemove', function(event) {
+                    tooltip.style('left', (event.pageX + 10) + 'px')
+                        .style('top', (event.pageY - 10) + 'px');
+                })
+                .on('mouseout', function() {
+                    const currentArc = d3.select(this.parentNode);
+                    
+                    // Reset slice
+                    d3.select(this)
+                        .transition()
+                        .duration(200)
+                        .attr('transform', 'scale(1)')
+                        .style('filter', 'brightness(1)');
+                    
+                    // Hide label and line
+                    currentArc.select('.slice-label')
+                        .transition()
+                        .duration(200)
+                        .style('opacity', 0);
+                    
+                    currentArc.select('.label-line')
+                        .transition()
+                        .duration(200)
+                        .style('opacity', 0);
+
+                    // Reset center text
+                    centerText.transition().duration(200)
+                        .text(() => {
+                            if (valueKey === 'total') {
+                                const totalTrades = d3.sum(data, d => d.total);
+                                return totalTrades;
+                            } else if (valueKey === 'totalProfit') {
+                                const totalProfit = d3.sum(data, d => d.totalProfit);
+                                return `${totalProfit >= 1000 ? (totalProfit/1000).toFixed(1) + 'K' : totalProfit.toFixed(0)}`;
+                            } else if (valueKey === 'lossAmount') {
+                                const totalLoss = d3.sum(data, d => d.lossAmount);
+                                return `${totalLoss >= 1000 ? (totalLoss/1000).toFixed(1) + 'K' : totalLoss.toFixed(0)}`;
+                            }
+                        });
+                    
+                    centerSubText.transition().duration(200)
+                        .text(() => {
+                            if (valueKey === 'total') return 'Total Trades';
+                            else if (valueKey === 'totalProfit') return 'Total Profit';
+                            else if (valueKey === 'lossAmount') return 'Total Loss';
+                        });
+
+                    // Hide tooltip
+                    tooltip.transition().duration(300).style('opacity', 0);
+                });
+
+            // Add center text with enhanced styling
+            const centerTextGroup = g.append('g')
+                .attr('class', 'center-text');
+
+            centerTextGroup.append('circle')
+                .attr('r', innerRadius * 0.9)
+                .attr('fill', 'rgba(255, 255, 255, 0.95)')
+                .attr('stroke', '#e5e7eb')
+                .attr('stroke-width', 2);
+
+            const centerText = centerTextGroup.append('text')
+                .attr('text-anchor', 'middle')
+                .attr('dy', '-0.3em')
+                .style('font-size', '18px')
+                .style('font-weight', 'bold')
+                .style('fill', '#374151');
+
+            const centerSubText = centerTextGroup.append('text')
+                .attr('text-anchor', 'middle')
+                .attr('dy', '1.2em')
+                .style('font-size', '12px')
+                .style('font-weight', 'normal')
+                .style('fill', '#6b7280');
+
+            if (valueKey === 'total') {
+                const totalTrades = d3.sum(data, d => d.total);
+                centerText.text(totalTrades);
+                centerSubText.text('Total Trades');
+            } else if (valueKey === 'totalProfit') {
+                const totalProfit = d3.sum(data, d => d.totalProfit);
+                centerText.text(`${totalProfit >= 1000 ? (totalProfit/1000).toFixed(1) + 'K' : totalProfit.toFixed(0)}`);
+                centerSubText.text('Total Profit');
+            } else if (valueKey === 'lossAmount') {
+                const totalLoss = d3.sum(data, d => d.lossAmount);
+                centerText.text(`${totalLoss >= 1000 ? (totalLoss/1000).toFixed(1) + 'K' : totalLoss.toFixed(0)}`);
+                centerSubText.text('Total Loss');
+            }
+
+            // Clean up tooltip on chart destruction
+            setTimeout(() => {
+                const existingTooltips = document.querySelectorAll('.donut-tooltip');
+                existingTooltips.forEach(t => {
+                    if (t !== tooltip.node()) t.remove();
+                });
+            }, 100);
+        }
+
+        // 3. Fungsi untuk render pair analysis
+        function renderPairAnalysis() {
+            const pairStats = createPairAnalysis();
+            
+            if (Object.keys(pairStats).length === 0) {
+                document.getElementById('pairAnalysisContainer').innerHTML = 
+                    '<p class="text-center text-gray-500 py-8">No trading data available</p>';
+                return;
+            }
+
+            // Most Traded Pairs (Top 6)
+            const mostTraded = Object.entries(pairStats)
+                .sort(([,a], [,b]) => b.total - a.total)
+                .slice(0, 6)
+                .map(([name, stats]) => ({ name, ...stats }));
+
+            // Most Profitable Pairs (Top 6, only positive profits)
+            const mostProfitable = Object.entries(pairStats)
+                .filter(([,stats]) => stats.totalProfit > 0)
+                .sort(([,a], [,b]) => b.totalProfit - a.totalProfit)
+                .slice(0, 6)
+                .map(([name, stats]) => ({ name, ...stats }));
+
+            // Most Losing Pairs (Top 6, only pairs with losses)
+            const mostLosing = Object.entries(pairStats)
+                .filter(([,stats]) => stats.lossAmount > 0)
+                .sort(([,a], [,b]) => b.lossAmount - a.lossAmount)
+                .slice(0, 6)
+                .map(([name, stats]) => ({ name, ...stats }));
+
+            // Clear existing charts and tooltips
+            document.querySelectorAll('.donut-tooltip').forEach(t => t.remove());
+
+            // Create charts
+            createDonutChart('mostTradedChart', mostTraded, 'Most Traded Pairs', 'total');
+            createDonutChart('mostProfitableChart', mostProfitable, 'Most Profitable Pairs', 'totalProfit', 'profit');
+            createDonutChart('mostLosingChart', mostLosing, 'Most Losing Pairs', 'lossAmount', 'loss');
+
+            // Add summary tables below charts
+            createPairSummaryTable('mostTradedSummary', mostTraded, 'traded');
+            createPairSummaryTable('mostProfitableSummary', mostProfitable, 'profitable');
+            createPairSummaryTable('mostLosingSummary', mostLosing, 'losing');
+        }
+
+        // 4. Fungsi untuk membuat tabel summary
+        function createPairSummaryTable(containerId, data, type) {
+            if (!data || data.length === 0) return;
+
+            let tableHtml = `
+                <div class="mt-4">
+                    <table class="w-full text-xs">
+                        <thead>
+                            <tr class="border-b text-gray-600">
+                                <th class="text-left py-1">Pair</th>
+                                <th class="text-center py-1">Trades</th>
+                                <th class="text-center py-1">Win%</th>`;
+
+            if (type === 'traded') {
+                tableHtml += `<th class="text-right py-1">P/L</th>`;
+            } else if (type === 'profitable') {
+                tableHtml += `<th class="text-right py-1">Profit</th>`;
+            } else if (type === 'losing') {
+                tableHtml += `<th class="text-right py-1">Loss</th>`;
+            }
+
+            tableHtml += `</tr></thead><tbody>`;
+
+            data.forEach(pair => {
+                const winRate = ((pair.wins / pair.total) * 100).toFixed(1);
+                const winRateClass = parseFloat(winRate) >= 50 ? 'text-green-600' : 'text-red-600';
+                
+                tableHtml += `
+                    <tr class="border-b border-gray-100">
+                        <td class="py-1 font-medium">${pair.name}</td>
+                        <td class="text-center py-1">${pair.total}</td>
+                        <td class="text-center py-1 ${winRateClass}">${winRate}%</td>`;
+
+                if (type === 'traded') {
+                    const plClass = pair.totalProfit >= 0 ? 'text-green-600' : 'text-red-600';
+                    tableHtml += `<td class="text-right py-1 ${plClass}">${pair.totalProfit.toFixed(2)}</td>`;
+                } else if (type === 'profitable') {
+                    tableHtml += `<td class="text-right py-1 text-green-600">${pair.totalProfit.toFixed(2)}</td>`;
+                } else if (type === 'losing') {
+                    tableHtml += `<td class="text-right py-1 text-red-600">${pair.lossAmount.toFixed(2)}</td>`;
+                }
+
+                tableHtml += `</tr>`;
+            });
+
+            tableHtml += `</tbody></table></div>`;
+            document.getElementById(containerId).innerHTML = tableHtml;
         }
 
         function drawEquityChart() {
-    const svg = d3.select("#equityChartUsd");
-    svg.selectAll("*").remove();
-    
-    const container = document.querySelector('.chart-container');
-    if (!container) {
-        console.error("Chart container not found");
-        return;
-    }
-    
-    // Set SVG dimensions
-    const containerWidth = container.clientWidth;
-    const containerHeight = 400;
-    
-    if (containerWidth === 0) {
-        console.warn("Container width is 0, retrying in 100ms");
-        setTimeout(drawEquityChart, 100);
-        return;
-    }
-    
-    svg.attr("width", containerWidth).attr("height", containerHeight);
-    
-    const margin = { top: 20, right: 30, bottom: 40, left: 80 };
-    const width = containerWidth - margin.left - margin.right;
-    const height = containerHeight - margin.top - margin.bottom;
-
-    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
-    
-    // Prepare data
-    const initialBalance = getInitialBalance();
-    let cumulativeEquity = initialBalance;
-    const chartData = [{ index: 0, equityUsd: initialBalance, date: "Start" }];
-    
-    // Sort trades by date
-    const sortedTrades = [...tradingData].sort((a, b) => new Date(a.date) - new Date(b.date));
-    
-    sortedTrades.forEach((trade, i) => {
-        const pips = calculatePips(trade.pair, trade.position, trade.entryPrice, trade.exitPrice);
-        const profitUsd = calculateProfitInUsd(trade.pair, pips, trade.lotSize);
-        cumulativeEquity += profitUsd;
-        chartData.push({ 
-            index: i + 1, 
-            equityUsd: cumulativeEquity, 
-            date: new Date(trade.date).toLocaleDateString('id-ID'),
-            profit: profitUsd
-        });
-    });
-
-    // If no data, show initial balance line only
-    if (chartData.length <= 1) {
-        const y = d3.scaleLinear()
-            .domain([initialBalance * 0.9, initialBalance * 1.1])
-            .range([height, 0]);
+            const svg = d3.select("#equityChartUsd");
+            svg.selectAll("*").remove();
             
-        // Draw initial balance line
-        g.append("line")
-            .attr("x1", 0)
-            .attr("x2", width)
-            .attr("y1", y(initialBalance))
-            .attr("y2", y(initialBalance))
-            .attr("stroke", "#22c55e")
-            .attr("stroke-width", 2)
-            .attr("stroke-dasharray", "5,5");
+            const container = svg.node()?.parentElement;
+            if (!container) return;
             
-        // Add axes
-        g.append("g")
-            .attr("transform", `translate(0,${height})`)
-            .call(d3.axisBottom(d3.scaleLinear().domain([0, 10]).range([0, width])));
+            const containerWidth = container.clientWidth || 800;
+            const containerHeight = 400;
             
-        g.append("g")
-            .call(d3.axisLeft(y).tickFormat(d3.format("$,.0f")));
+            if (containerWidth === 0) {
+                setTimeout(drawEquityChart, 100);
+                return;
+            }
             
-        // Add label
-        g.append("text")
-            .attr("x", width / 2)
-            .attr("y", height / 2)
-            .attr("text-anchor", "middle")
-            .attr("fill", "#6b7280")
-            .text("Belum ada data trading");
+            svg.attr("width", containerWidth).attr("height", containerHeight);
             
-        return;
-    }
+            const margin = { top: 20, right: 30, bottom: 40, left: 80 };
+            const width = containerWidth - margin.left - margin.right;
+            const height = containerHeight - margin.top - margin.bottom;
 
-    // Create scales
-    const x = d3.scaleLinear()
-        .domain([0, chartData.length - 1])
-        .range([0, width]);
+            const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+            
+            const initialBalance = getInitialBalance();
+            let cumulativeEquity = initialBalance;
+            const chartData = [{ index: 0, equityUsd: initialBalance, date: "Start", type: "initial" }];
+            
+            // Combine trades and withdraws, sort by date
+            const allTransactions = [
+                ...tradingData.map(trade => ({...trade, type: 'trade'})),
+                ...withdrawData.map(withdraw => ({...withdraw, type: 'withdraw', date: withdraw.withdrawDate}))
+            ].sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            allTransactions.forEach((transaction, i) => {
+                if (transaction.type === 'trade') {
+                    const pips = ForexCalculator.calculatePips(transaction.pair, transaction.position, transaction.entryPrice, transaction.exitPrice);
+                    const profitUsd = ForexCalculator.calculateProfitInUsd(transaction.pair, pips, transaction.lotSize);
+                    cumulativeEquity += profitUsd;
+                    chartData.push({ 
+                        index: i + 1, 
+                        equityUsd: cumulativeEquity, 
+                        date: new Date(transaction.date).toLocaleDateString('id-ID'),
+                        profit: profitUsd,
+                        type: 'trade'
+                    });
+                } else if (transaction.type === 'withdraw') {
+                    const withdrawAmount = parseFloat(transaction.amount) || 0;
+                    cumulativeEquity -= withdrawAmount;
+                    chartData.push({ 
+                        index: i + 1, 
+                        equityUsd: cumulativeEquity, 
+                        date: new Date(transaction.date).toLocaleDateString('id-ID'),
+                        withdraw: withdrawAmount,
+                        type: 'withdraw'
+                    });
+                }
+            });
 
-    const yExtent = d3.extent(chartData, d => d.equityUsd);
-    const yPadding = (yExtent[1] - yExtent[0]) * 0.1 || initialBalance * 0.1;
-    const y = d3.scaleLinear()
-        .domain([yExtent[0] - yPadding, yExtent[1] + yPadding])
-        .nice()
-        .range([height, 0]);
+            if (chartData.length <= 1) {
+                const y = d3.scaleLinear()
+                    .domain([initialBalance * 0.9, initialBalance * 1.1])
+                    .range([height, 0]);
+                    
+                g.append("line")
+                    .attr("x1", 0)
+                    .attr("x2", width)
+                    .attr("y1", y(initialBalance))
+                    .attr("y2", y(initialBalance))
+                    .attr("stroke", "#22c55e")
+                    .attr("stroke-width", 2)
+                    .attr("stroke-dasharray", "5,5");
+                    
+                g.append("g")
+                    .attr("transform", `translate(0,${height})`)
+                    .call(d3.axisBottom(d3.scaleLinear().domain([0, 10]).range([0, width])));
+                    
+                g.append("g")
+                    .call(d3.axisLeft(y).tickFormat(d3.format("$,.0f")));
+                    
+                g.append("text")
+                    .attr("x", width / 2)
+                    .attr("y", height / 2)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "#6b7280")
+                    .text("Belum ada data trading");
+                    
+                return;
+            }
 
-    // Create line generator
-    const line = d3.line()
-        .x(d => x(d.index))
-        .y(d => y(d.equityUsd))
-        .curve(d3.curveMonotoneX);
+            const x = d3.scaleLinear()
+                .domain([0, chartData.length - 1])
+                .range([0, width]);
 
-    // Create area generator
-    const area = d3.area()
-        .x(d => x(d.index))
-        .y0(y(initialBalance))
-        .y1(d => y(d.equityUsd))
-        .curve(d3.curveMonotoneX);
+            const yExtent = d3.extent(chartData, d => d.equityUsd);
+            const yPadding = (yExtent[1] - yExtent[0]) * 0.1 || initialBalance * 0.1;
+            const y = d3.scaleLinear()
+                .domain([yExtent[0] - yPadding, yExtent[1] + yPadding])
+                .nice()
+                .range([height, 0]);
 
-    // Add gradient definition
-    const defs = svg.append("defs");
-    const gradient = defs.append("linearGradient")
-        .attr("id", "equityGradient")
-        .attr("gradientUnits", "userSpaceOnUse")
-        .attr("x1", 0).attr("y1", y(Math.max(...chartData.map(d => d.equityUsd))))
-        .attr("x2", 0).attr("y2", y(Math.min(...chartData.map(d => d.equityUsd))));
+            const line = d3.line()
+                .x(d => x(d.index))
+                .y(d => y(d.equityUsd))
+                .curve(d3.curveMonotoneX);
 
-    gradient.append("stop")
-        .attr("offset", "0%")
-        .attr("stop-color", "#22c55e")
-        .attr("stop-opacity", 0.3);
+            const area = d3.area()
+                .x(d => x(d.index))
+                .y0(y(initialBalance))
+                .y1(d => y(d.equityUsd))
+                .curve(d3.curveMonotoneX);
 
-    gradient.append("stop")
-        .attr("offset", "100%")
-        .attr("stop-color", "#22c55e")
-        .attr("stop-opacity", 0.1);
+            const defs = svg.append("defs");
+            const gradient = defs.append("linearGradient")
+                .attr("id", "equityGradient")
+                .attr("gradientUnits", "userSpaceOnUse")
+                .attr("x1", 0).attr("y1", y(Math.max(...chartData.map(d => d.equityUsd))))
+                .attr("x2", 0).attr("y2", y(Math.min(...chartData.map(d => d.equityUsd))));
 
-    // Draw area
-    g.append("path")
-        .datum(chartData)
-        .attr("fill", "url(#equityGradient)")
-        .attr("d", area);
+            gradient.append("stop")
+                .attr("offset", "0%")
+                .attr("stop-color", "#22c55e")
+                .attr("stop-opacity", 0.3);
 
-    // Draw line
-    g.append("path")
-        .datum(chartData)
-        .attr("fill", "none")
-        .attr("stroke", "#22c55e")
-        .attr("stroke-width", 2)
-        .attr("d", line);
+            gradient.append("stop")
+                .attr("offset", "100%")
+                .attr("stop-color", "#22c55e")
+                .attr("stop-opacity", 0.1);
 
-    // Add initial balance reference line
-    g.append("line")
-        .attr("x1", 0)
-        .attr("x2", width)
-        .attr("y1", y(initialBalance))
-        .attr("y2", y(initialBalance))
-        .attr("stroke", "#6b7280")
-        .attr("stroke-width", 1)
-        .attr("stroke-dasharray", "3,3")
-        .attr("opacity", 0.5);
+            g.append("path")
+                .datum(chartData)
+                .attr("fill", "url(#equityGradient)")
+                .attr("d", area);
 
-    // Add dots for data points
-    g.selectAll(".dot")
-        .data(chartData.slice(1)) // Skip initial point
-        .enter().append("circle")
-        .attr("class", "dot")
-        .attr("cx", d => x(d.index))
-        .attr("cy", d => y(d.equityUsd))
-        .attr("r", 3)
-        .attr("fill", d => d.profit >= 0 ? "#22c55e" : "#ef4444")
-        .attr("stroke", "white")
-        .attr("stroke-width", 1);
+            g.append("path")
+                .datum(chartData)
+                .attr("fill", "none")
+                .attr("stroke", "#22c55e")
+                .attr("stroke-width", 2)
+                .attr("d", line);
 
-    // Add X axis
-    const xAxis = g.append("g")
-        .attr("transform", `translate(0,${height})`)
-        .call(d3.axisBottom(x)
-            .ticks(Math.min(10, chartData.length - 1))
-            .tickFormat(d3.format("d")));
+            g.append("line")
+                .attr("x1", 0)
+                .attr("x2", width)
+                .attr("y1", y(initialBalance))
+                .attr("y2", y(initialBalance))
+                .attr("stroke", "#6b7280")
+                .attr("stroke-width", 1)
+                .attr("stroke-dasharray", "3,3")
+                .attr("opacity", 0.5);
 
-    // Add Y axis
-    g.append("g")
-        .call(d3.axisLeft(y).tickFormat(d3.format("$,.0f")));
+            g.selectAll(".dot")
+                .data(chartData.slice(1))
+                .enter().append("circle")
+                .attr("class", "dot")
+                .attr("cx", d => x(d.index))
+                .attr("cy", d => y(d.equityUsd))
+                .attr("r", 3)
+                .attr("fill", d => {
+                    if (d.type === 'withdraw') return "#dc2626";
+                    return d.profit >= 0 ? "#22c55e" : "#ef4444";
+                })
+                .attr("stroke", "white")
+                .attr("stroke-width", 1);
 
-    // Add axis labels
-    g.append("text")
-        .attr("transform", "rotate(-90)")
-        .attr("y", 0 - margin.left)
-        .attr("x", 0 - (height / 2))
-        .attr("dy", "1em")
-        .style("text-anchor", "middle")
-        .style("font-size", "12px")
-        .style("fill", "#6b7280")
-        .text("Equity (USD)");
+            g.append("g")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(x)
+                    .ticks(Math.min(10, chartData.length - 1))
+                    .tickFormat(d3.format("d")));
 
-    g.append("text")
-        .attr("transform", `translate(${width / 2}, ${height + margin.bottom - 5})`)
-        .style("text-anchor", "middle")
-        .style("font-size", "12px")
-        .style("fill", "#6b7280")
-        .text("Trade Sequence");
+            g.append("g")
+                .call(d3.axisLeft(y).tickFormat(d3.format("$,.0f")));
 
-    // Add tooltip
-    const tooltip = d3.select("body").append("div")
-        .attr("class", "tooltip")
-        .style("position", "absolute")
-        .style("background", "rgba(0, 0, 0, 0.8)")
-        .style("color", "white")
-        .style("padding", "8px")
-        .style("border-radius", "4px")
-        .style("font-size", "12px")
-        .style("pointer-events", "none")
-        .style("opacity", 0)
-        .style("z-index", 1000);
+            g.append("text")
+                .attr("transform", "rotate(-90)")
+                .attr("y", 0 - margin.left)
+                .attr("x", 0 - (height / 2))
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .style("font-size", "12px")
+                .style("fill", "#6b7280")
+                .text("Equity (USD)");
 
-    // Add invisible overlay for mouse events
-    const overlay = g.append("rect")
-        .attr("width", width)
-        .attr("height", height)
-        .style("fill", "none")
-        .style("pointer-events", "all");
+            g.append("text")
+                .attr("transform", `translate(${width / 2}, ${height + margin.bottom - 5})`)
+                .style("text-anchor", "middle")
+                .style("font-size", "12px")
+                .style("fill", "#6b7280")
+                .text("Transaction Sequence");
 
-    overlay.on("mousemove", function(event) {
-        const mouseX = d3.pointer(event, this)[0];
-        const index = Math.round(x.invert(mouseX));
+            const tooltip = d3.select("body").append("div")
+                .attr("class", "tooltip")
+                .style("position", "absolute")
+                .style("background", "rgba(0, 0, 0, 0.8)")
+                .style("color", "white")
+                .style("padding", "8px")
+                .style("border-radius", "4px")
+                .style("font-size", "12px")
+                .style("pointer-events", "none")
+                .style("opacity", 0)
+                .style("z-index", 1000);
+
+            const overlay = g.append("rect")
+                .attr("width", width)
+                .attr("height", height)
+                .style("fill", "none")
+                .style("pointer-events", "all");
+
+            overlay.on("mousemove", function(event) {
+                const mouseX = d3.pointer(event, this)[0];
+                const index = Math.round(x.invert(mouseX));
+                
+                if (index >= 0 && index < chartData.length) {
+                    const data = chartData[index];
+                    tooltip.transition().duration(200).style("opacity", 0.9);
+                    let tooltipContent = `
+                        <div><strong>${data.type === 'initial' ? 'Initial' : data.type === 'withdraw' ? 'Withdraw' : 'Trade'} #${index}</strong></div>
+                        <div>Equity: ${data.equityUsd.toFixed(2)}</div>`;
+                    
+                    if (data.profit !== undefined) {
+                        tooltipContent += `<div>P/L: ${data.profit.toFixed(2)}</div>`;
+                    }
+                    if (data.withdraw !== undefined) {
+                        tooltipContent += `<div>Withdraw: -${data.withdraw.toFixed(2)}</div>`;
+                    }
+                    if (data.date !== "Start") {
+                        tooltipContent += `<div>Date: ${data.date}</div>`;
+                    }
+                    
+                    tooltip.html(tooltipContent)
+                        .style("left", (event.pageX + 10) + "px")
+                        .style("top", (event.pageY - 10) + "px");
+                }
+            })
+            .on("mouseout", function() {
+                tooltip.transition().duration(500).style("opacity", 0);
+            });
+
+            setTimeout(() => {
+                const existingTooltip = d3.select(".tooltip");
+                if (!existingTooltip.empty()) {
+                    existingTooltip.remove();
+                }
+            }, 100);
+        }
         
-        if (index >= 0 && index < chartData.length) {
-            const data = chartData[index];
-            tooltip.transition().duration(200).style("opacity", 0.9);
-            tooltip.html(`
-                <div><strong>Trade #${index}</strong></div>
-                <div>Equity: $${data.equityUsd.toFixed(2)}</div>
-                ${data.profit !== undefined ? `<div>P/L: $${data.profit.toFixed(2)}</div>` : ''}
-                ${data.date !== "Start" ? `<div>Date: ${data.date}</div>` : ''}
-            `)
-            .style("left", (event.pageX + 10) + "px")
-            .style("top", (event.pageY - 10) + "px");
-        }
-    })
-    .on("mouseout", function() {
-        tooltip.transition().duration(500).style("opacity", 0);
-    });
-
-    // Remove tooltip when component is destroyed
-    setTimeout(() => {
-        const existingTooltip = d3.select(".tooltip");
-        if (!existingTooltip.empty()) {
-            existingTooltip.remove();
-        }
-    }, 100);
-}
         function resetForm() {
             ui.tradeForm.reset();
             recordBeingEditedId = null;
-            ui.addOrUpdateTradeBtn.textContent = 'Tambah Trading';
+            ui.addOrUpdateTradeBtn.textContent = 'Add Trading';
             ui.addOrUpdateTradeBtn.disabled = false;
             ui.cancelEditBtn.style.display = 'none';
             document.getElementById('date').value = new Date().toISOString().slice(0, 16);
+            document.getElementById('customPairDiv').style.display = 'none';
+        }
+
+        function resetWithdrawForm() {
+            ui.withdrawForm.reset();
+            withdrawBeingEditedId = null;
+            ui.addOrUpdateWithdrawBtn.textContent = 'Add Withdraw';
+            ui.addOrUpdateWithdrawBtn.disabled = false;
+            ui.cancelWithdrawEditBtn.style.display = 'none';
+            document.getElementById('withdrawDate').value = new Date().toISOString().slice(0, 16);
+            updateBalanceAfterWithdraw();
         }
         
         async function handleFormSubmit(e) {
             e.preventDefault();
-            const fields = Array.from(ui.tradeForm.elements).reduce((acc, el) => {
-                if (el.id && el.value) { acc[el.id] = el.type === 'number' ? parseFloat(el.value) : el.value; }
-                return acc;
-            }, {});
+            const fields = {};
+            
+            Array.from(ui.tradeForm.elements).forEach(el => {
+                if (el.id && el.value) {
+                    if (el.id === 'pair' && el.value === 'custom') {
+                        fields.pair = document.getElementById('customPair').value || 'EURUSD';
+                    } else if (el.id !== 'customPair') {
+                        fields[el.id] = el.type === 'number' ? parseFloat(el.value) : el.value;
+                    }
+                }
+            });
+            
             ui.addOrUpdateTradeBtn.disabled = true;
             ui.addOrUpdateTradeBtn.textContent = 'Menyimpan...';
 
             let response;
             if (recordBeingEditedId) {
-                response = await fetch(`${airtableUrl}/${recordBeingEditedId}`, { method: 'PATCH', headers: apiHeaders, body: JSON.stringify({ fields }) });
+                response = await fetch(`${tradesUrl}/${recordBeingEditedId}`, { 
+                    method: 'PATCH', 
+                    headers: apiHeaders, 
+                    body: JSON.stringify({ fields }) 
+                });
             } else {
-                response = await fetch(airtableUrl, { method: 'POST', headers: apiHeaders, body: JSON.stringify({ fields }) });
+                response = await fetch(tradesUrl, { 
+                    method: 'POST', 
+                    headers: apiHeaders, 
+                    body: JSON.stringify({ fields }) 
+                });
             }
             
             if (response.ok) {
@@ -518,58 +2429,177 @@
             resetForm();
         }
 
-        async function handleDelete(id) {
-            if (confirm('Anda yakin ingin menghapus data ini secara permanen?')) {
-                const response = await fetch(`${airtableUrl}/${id}`, { method: 'DELETE', headers: apiHeaders });
+        async function handleWithdrawSubmit(e) {
+            e.preventDefault();
+            const currentBalance = getCurrentBalance();
+            const withdrawAmount = parseFloat(document.getElementById('withdrawAmount').value) || 0;
+            
+            if (withdrawAmount <= 0) {
+                alert("Amount harus lebih besar dari 0");
+                return;
+            }
+            
+            if (withdrawAmount > currentBalance) {
+                alert(`Insufficient balance. Available: ${currentBalance.toFixed(2)}`);
+                return;
+            }
+            
+            const fields = {
+                withdrawDate: document.getElementById('withdrawDate').value,
+                amount: withdrawAmount,
+                withdrawNotes: document.getElementById('withdrawNotes').value || '',
+                balanceAfter: currentBalance - withdrawAmount
+            };
+            
+            ui.addOrUpdateWithdrawBtn.disabled = true;
+            ui.addOrUpdateWithdrawBtn.textContent = 'Menyimpan...';
+
+            let response;
+            if (withdrawBeingEditedId) {
+                response = await fetch(`${withdrawsUrl}/${withdrawBeingEditedId}`, { 
+                    method: 'PATCH', 
+                    headers: apiHeaders, 
+                    body: JSON.stringify({ fields }) 
+                });
+            } else {
+                response = await fetch(withdrawsUrl, { 
+                    method: 'POST', 
+                    headers: apiHeaders, 
+                    body: JSON.stringify({ fields }) 
+                });
+            }
+            
+            if (response.ok) {
+                await syncWithAirtable();
+            } else {
+                alert("Gagal menyimpan data withdraw ke server.");
+            }
+            resetWithdrawForm();
+        }
+
+        async function handleDelete(id, type = 'trade') {
+            const url = type === 'withdraw' ? withdrawsUrl : tradesUrl;
+            const confirmText = type === 'withdraw' ? 'withdraw' : 'trading';
+            
+            if (confirm(`Anda yakin ingin menghapus data ${confirmText} ini secara permanen?`)) {
+                const response = await fetch(`${url}/${id}`, { 
+                    method: 'DELETE', 
+                    headers: apiHeaders 
+                });
                 if (response.ok) {
                     await syncWithAirtable();
                 } else {
-                    alert("Gagal menghapus data dari server.");
+                    alert(`Gagal menghapus data dari server.`);
                 }
             }
         }
 
+        // Event Listeners
         ui.tradeForm.addEventListener('submit', handleFormSubmit);
+        ui.withdrawForm.addEventListener('submit', handleWithdrawSubmit);
 
         ui.tableBody.addEventListener('click', (e) => {
             const button = e.target.closest('button');
             if (!button) return;
             const id = button.dataset.id;
+            const type = button.dataset.type || 'trade';
             
             if (button.classList.contains('btn-delete')) {
-                handleDelete(id);
+                handleDelete(id, type);
             } else if (button.classList.contains('btn-edit')) {
-                const trade = tradingData.find(t => t.id === id);
-                recordBeingEditedId = id;
-                Object.keys(trade).forEach(key => {
-                    const el = document.getElementById(key);
-                    if (el) el.value = trade[key];
-                });
-                ui.addOrUpdateTradeBtn.textContent = 'Update Trading';
-                ui.cancelEditBtn.style.display = 'inline-block';
-                ui.tradeForm.scrollIntoView({ behavior: 'smooth' });
+                if (type === 'trade') {
+                    const trade = tradingData.find(t => t.id === id);
+                    recordBeingEditedId = id;
+                    Object.keys(trade).forEach(key => {
+                        const el = document.getElementById(key);
+                        if (el) el.value = trade[key];
+                    });
+                    
+                    // Handle custom pairs
+                    if (!document.getElementById('pair').value) {
+                        document.getElementById('pair').value = 'custom';
+                        document.getElementById('customPairDiv').style.display = 'block';
+                        document.getElementById('customPair').value = trade.pair;
+                    }
+                    
+                    ui.addOrUpdateTradeBtn.textContent = 'Update Trading';
+                    ui.cancelEditBtn.style.display = 'inline-block';
+                    
+                    // Switch to trading tab and scroll to form
+                    document.querySelector('[data-tab="trading"]').click();
+                    ui.tradeForm.scrollIntoView({ behavior: 'smooth' });
+                }
+            }
+        });
+
+        ui.withdrawTableBody.addEventListener('click', (e) => {
+            const button = e.target.closest('button');
+            if (!button) return;
+            const id = button.dataset.id;
+            const type = button.dataset.type || 'withdraw';
+            
+            if (button.classList.contains('btn-delete')) {
+                handleDelete(id, type);
+            } else if (button.classList.contains('btn-edit')) {
+                if (type === 'withdraw') {
+                    const withdraw = withdrawData.find(w => w.id === id);
+                    withdrawBeingEditedId = id;
+                    
+                    document.getElementById('withdrawDate').value = withdraw.withdrawDate || '';
+                    document.getElementById('withdrawAmount').value = withdraw.amount || '';
+                    document.getElementById('withdrawNotes').value = withdraw.withdrawNotes || '';
+                    
+                    ui.addOrUpdateWithdrawBtn.textContent = 'Update Withdraw';
+                    ui.cancelWithdrawEditBtn.style.display = 'inline-block';
+                    
+                    // Switch to withdraw tab and scroll to form
+                    document.querySelector('[data-tab="withdraw"]').click();
+                    ui.withdrawForm.scrollIntoView({ behavior: 'smooth' });
+                    updateBalanceAfterWithdraw();
+                }
             }
         });
 
         ui.cancelEditBtn.addEventListener('click', resetForm);
+        ui.cancelWithdrawEditBtn.addEventListener('click', resetWithdrawForm);
         ui.initialBalanceInput.addEventListener('change', fullUpdate);
-        window.addEventListener('resize', drawEquityChart);
+        window.addEventListener('resize', () => {
+            drawEquityChart();
+            drawMonthlyProfitChart();
+        });
 
         function fullUpdate() {
             renderTable();
+            renderWithdrawTable();
             updateAllStats();
-            drawEquityChart();
+            
+            // Update content based on active tab
+            const activeTab = document.querySelector('.tab-button.active').dataset.tab;
+            if (activeTab === 'analysis') {
+                renderAnalysisTab();
+            } else if (activeTab === 'performance') {
+                renderPerformanceTab();
+            } else if (activeTab === 'overview') {
+                drawEquityChart();
+            }
+            
+            updateAvailableBalance();
         }
 
-        // --- Initial Load Logic ---
+        // Initialize
         function initialize() {
+            TabManager.init();
             resetForm();
-            tradingData = loadFromCache();
-            if (tradingData.length > 0) {
+            resetWithdrawForm();
+            
+            const cachedData = loadFromCache();
+            tradingData = cachedData.trades;
+            withdrawData = cachedData.withdraws;
+            
+            if (tradingData.length > 0 || withdrawData.length > 0) {
                 ui.syncStatus.textContent = 'Menampilkan data dari cache...';
                 fullUpdate();
             }
-            // Selalu coba sinkronisasi setelah memuat dari cache
             syncWithAirtable();
         }
 
@@ -578,6 +2608,3 @@
     </script>
 </body>
 </html>
-
-
-
